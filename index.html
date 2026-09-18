@@ -883,8 +883,9 @@ html.setup-mode .site-footer { display: none; }
 
 /* =========================================================================
    WALL: every rated title, pinned up as a poster
+   A real poster wall: big posters, butted together with no gaps or rounded
+   corners, running edge to edge across the screen. Few posters per row.
    ========================================================================= */
-.wall-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: .25rem 0 1rem; }
 .wall-toolbar {
   position: sticky; top: calc(var(--topbar-h) + var(--safe-t) + .5rem); z-index: 6;
   display: flex; align-items: center; gap: .375rem; width: fit-content; max-width: 100%;
@@ -895,48 +896,49 @@ html.setup-mode .site-footer { display: none; }
 .wall-toolbar .icon-btn { width: 2.25rem; height: 2.25rem; color: var(--label); }
 .wall-toolbar .icon-btn:hover { background: var(--fill); }
 .wall {
-  --tile: 6.25rem; --wall-gap: 4px;
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--tile), 1fr)); gap: var(--wall-gap);
-  margin: 0 calc(-1 * var(--pad)); padding: 0 var(--wall-gap);
+  --cols: 2;
+  display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 0;
+  /* Break out of the page padding so the wall meets both screen edges */
+  margin: 0 calc(-1 * var(--pad));
+  /* The toolbar floats over the wall, so pull the posters up beneath it */
+  margin-top: -3.5rem;
 }
-.wall[data-size="s"] { --tile: 4.25rem; --wall-gap: 3px; }
-.wall[data-size="l"] { --tile: 9rem; --wall-gap: 6px; }
-@media (min-width: 40rem) {
-  .wall { --tile: 8rem; margin: 0; padding: 0; }
-  .wall[data-size="s"] { --tile: 5.5rem; }
-  .wall[data-size="l"] { --tile: 12rem; --wall-gap: 8px; }
+@media (min-width: 40rem) { .wall { --cols: 3; } }
+@media (min-width: 60rem) { .wall { --cols: 4; } }
+@media (min-width: 100rem) { .wall { --cols: 5; } }
+/* On wide screens .page is capped and centred; widen the wall to the full content area */
+@media (min-width: 60rem) {
+  .page.wall-page { max-width: none; }
+  /* Run the wall slightly under the floating glass sidebar's edge rather
+     than stopping short of it, so the panel reads as floating over the wall */
+  .wall-page .wall { margin-left: calc(-1 * var(--pad) - 1.25rem); }
 }
 .wall-tile {
   position: relative; display: block; aspect-ratio: 2 / 3; overflow: hidden;
-  border-radius: .375rem; background: var(--fill); color: inherit; text-decoration: none !important;
-  content-visibility: auto; contain-intrinsic-size: auto 150px;
+  background: var(--fill); color: inherit; text-decoration: none !important;
+  content-visibility: auto; contain-intrinsic-size: auto 420px;
   transition: transform var(--spring-soft-dur) var(--spring-soft), box-shadow .3s ease;
 }
-.wall[data-size="l"] .wall-tile { border-radius: .625rem; }
-.wall-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .wall-tile .poster { width: 100%; height: 100%; aspect-ratio: auto; border-radius: 0; }
 .wall-tile .poster::after { display: none; }
-.wall-tile::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: var(--poster-edge); pointer-events: none; }
+.wall-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* A hairline where two posters meet, like paper edges on a wall */
+.wall-tile::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 .5px rgba(0, 0, 0, .28); pointer-events: none; }
+/* Hover: the poster lifts off the wall slightly */
 @media (hover: hover) {
-  .wall-tile:hover { transform: scale(1.05); z-index: 2; box-shadow: 0 12px 30px -8px rgba(0,0,0,.45); }
+  .wall-tile:hover { transform: scale(1.025); z-index: 2; box-shadow: 0 18px 40px -10px rgba(0, 0, 0, .55); }
 }
-.wall-tile:active { transform: scale(.97); transition-duration: .1s; }
-.wall-chip { position: absolute; left: 4px; bottom: 4px; z-index: 1; font-size: .625rem; padding: .1875rem .375rem; }
-.wall[data-size="l"] .wall-chip { left: 6px; bottom: 6px; font-size: .75rem; padding: .25rem .5rem; }
-.wall[data-size="s"] .wall-chip { display: none; }
-.wall-chip .liked-mark { color: #ff6b93; }
-.wall-chip .liked-mark svg { width: .6875rem; height: .6875rem; }
-.new-chip { position: absolute; right: 4px; top: 4px; z-index: 1; font-size: .5625rem; padding: .1875rem .375rem; text-transform: none; }
-.wall[data-size="s"] .new-chip { font-size: 0; padding: 0; width: .5rem; height: .5rem; background: var(--accent); }
+.wall-tile:active { transform: scale(.985); transition-duration: .1s; }
+.wall-tile:focus-visible { z-index: 3; outline-offset: -4px; border-radius: 0; }
+.new-chip { position: absolute; right: .5rem; top: .5rem; z-index: 1; font-size: .6875rem; padding: .25rem .5rem; }
 /* Newly rated posters get pinned up: they drop in from slightly above,
    a little tilted, and settle on a spring. */
-.wall-tile.pin { animation: pin-up var(--spring-dur) var(--spring) both; animation-delay: var(--d, 0ms); }
+.wall-tile.pin { animation: pin-up var(--spring-dur) var(--spring) both; animation-delay: var(--d, 0ms); z-index: 1; }
 .wall-tile.await-pin { opacity: 0; }
-.wall-tile:focus-visible { z-index: 3; outline-offset: 2px; }
 @keyframes pin-up {
-  0% { opacity: 0; transform: translateY(-22px) scale(1.14) rotate(var(--rot, -4deg)); }
+  0% { opacity: 0; transform: translateY(-26px) scale(1.08) rotate(var(--rot, -3deg)); box-shadow: 0 24px 40px -8px rgba(0,0,0,.5); }
   30% { opacity: 1; }
-  100% { opacity: 1; transform: none; }
+  100% { opacity: 1; transform: none; box-shadow: none; }
 }
 
 /* Shown only when browser storage is blocked; sits in the page flow so it never covers controls */
@@ -3253,13 +3255,11 @@ async function viewTitle(ctx) {
 }
 
 /* ---- Wall: every rated title as a poster, in the order they were rated ---- */
-const WALL_SIZES = { s: 'Small', m: 'Medium', l: 'Large' };
 function wallPrefs() {
   let p = {};
   try { p = JSON.parse(Store.get(CONFIG.KEYS.wallPrefs, '{}')) || {}; } catch (e) { p = {}; }
   return {
     order: p.order === 'oldest' ? 'oldest' : 'newest',
-    size: WALL_SIZES[p.size] ? p.size : 'm',
     type: p.type === 'movie' || p.type === 'tv' ? p.type : 'all'
   };
 }
@@ -3268,7 +3268,17 @@ function wallEntries() { return DB.entries(DB.data.logs).filter((e) => e.log && 
 function tiltFor(key) {
   let n = 0;
   for (let i = 0; i < key.length; i++) n = (n * 31 + key.charCodeAt(i)) % 997;
-  return ((n % 11) - 5) * 0.8;
+  return ((n % 7) - 3) * 0.8;
+}
+/** Wall posters are large, so they get their own higher-resolution sources. */
+function wallPosterHTML(t) {
+  const srcs = [['w185', 185], ['w342', 342], ['w500', 500], ['w780', 780]]
+    .map(([size, w]) => [imgUrl(t.poster_path, size), w]).filter(([u]) => u);
+  if (!srcs.length) return `<div class="poster" data-type="${t.media_type === 'tv' ? 'tv' : 'movie'}" data-title="${esc(t.title)}">${noImgHTML(t.media_type, t.title)}</div>`;
+  return `<div class="poster" data-type="${t.media_type === 'tv' ? 'tv' : 'movie'}" data-title="${esc(t.title)}"><img src="${esc(srcs[1] ? srcs[1][0] : srcs[0][0])}"
+    srcset="${srcs.map(([u, w]) => `${esc(u)} ${w}w`).join(', ')}"
+    sizes="(min-width: 100rem) 20vw, (min-width: 60rem) 25vw, (min-width: 40rem) 33vw, 50vw"
+    alt="" loading="lazy" decoding="async"></div>`;
 }
 function viewWall(ctx) {
   const prefs = wallPrefs();
@@ -3279,18 +3289,16 @@ function viewWall(ctx) {
       ${stateHTML({ icon: 'wall', title: 'Your wall is empty', body: 'Every time you rate a film or show, its poster goes up here. Rate something to pin your first poster.', actions: '<a class="btn btn-primary" href="#/search">Find something to rate</a><a class="btn" href="#/home">See what\u2019s trending</a>' })}</div>`;
     return;
   }
-  const avg = all.reduce((sum, e) => sum + e.log.rating, 0) / all.length;
   const newCount = all.filter((e) => e.log.rated_at > seenAt).length;
-  ctx.root.innerHTML = `<div class="page">
-    ${pageHead('Wall', { lede: `${esc(plural(all.length, 'poster'))}, average <span class="rating-star">\u2605</span> ${esc(fmtRating(Math.round(avg * 10) / 10))}${newCount ? `. ${esc(plural(newCount, 'new poster'))} since your last visit.` : ''}` })}
+  ctx.root.innerHTML = `<div class="page wall-page">
+    ${pageHead('Wall', { lede: `${esc(plural(all.length, 'poster'))}${newCount ? `, ${esc(plural(newCount, 'new one', 'new ones'))} since your last visit` : ''}` })}
     <div class="wall-toolbar glass" role="toolbar" aria-label="Wall options">
       ${segHTML('wtype', [['all', 'All'], ['movie', 'Films'], ['tv', 'TV']], prefs.type, 'Show')}
       <button class="icon-btn glass-press" type="button" data-order></button>
-      <button class="icon-btn glass-press" type="button" data-size aria-haspopup="menu" aria-expanded="false">${ICONS.browse}</button>
     </div>
-    <div class="wall" data-wall data-size="${prefs.size}"></div>
+    <div class="wall" data-wall></div>
   </div>`;
-  const wallEl = $('[data-wall]', ctx.root), orderBtn = $('[data-order]', ctx.root), sizeBtn = $('[data-size]', ctx.root);
+  const wallEl = $('[data-wall]', ctx.root), orderBtn = $('[data-order]', ctx.root);
   const savePrefs = () => Store.set(CONFIG.KEYS.wallPrefs, JSON.stringify(prefs));
 
   /* New posters pin up when they first come into view, not off-screen. */
@@ -3302,11 +3310,11 @@ function viewWall(ctx) {
         if (!en.isIntersecting) return;
         const el = en.target;
         pinIO.unobserve(el);
-        el.style.setProperty('--d', `${Math.min(i++, 10) * 70}ms`);
+        el.style.setProperty('--d', `${Math.min(i++, 8) * 90}ms`);
         el.classList.remove('await-pin');
         el.classList.add('pin');
       });
-    }, { threshold: 0.35 });
+    }, { threshold: 0.3 });
     ctx.onLeave(() => pinIO.disconnect());
   }
 
@@ -3315,24 +3323,20 @@ function viewWall(ctx) {
     orderBtn.innerHTML = newest ? ICONS.arrowDown : ICONS.arrowUp;
     orderBtn.setAttribute('aria-label', newest ? 'Order: newest first. Switch to oldest first' : 'Order: oldest first. Switch to newest first');
     orderBtn.title = newest ? 'Newest first' : 'Oldest first';
-    sizeBtn.setAttribute('aria-label', `Poster size: ${WALL_SIZES[prefs.size]}`);
-    sizeBtn.title = `Poster size: ${WALL_SIZES[prefs.size]}`;
   };
   const draw = (firstPaint) => {
     const list = all
       .filter((e) => prefs.type === 'all' || e.t.media_type === prefs.type)
       .sort((a, b) => prefs.order === 'newest' ? b.log.rated_at - a.log.rated_at : a.log.rated_at - b.log.rated_at);
     if (!list.length) {
-      wallEl.innerHTML = `<div style="grid-column:1/-1">${stateHTML({ icon: prefs.type === 'tv' ? 'tv' : 'film', title: `No ${prefs.type === 'tv' ? 'TV shows' : 'films'} on your wall yet`, body: 'Switch to All to see everything you\u2019ve rated.', compact: true })}</div>`;
+      wallEl.innerHTML = `<div style="grid-column:1/-1;padding-top:4rem">${stateHTML({ icon: prefs.type === 'tv' ? 'tv' : 'film', title: `No ${prefs.type === 'tv' ? 'TV shows' : 'films'} on your wall yet`, body: 'Switch to All to see your whole wall.', compact: true })}</div>`;
       return;
     }
     wallEl.innerHTML = list.map((e) => {
       const isNew = e.log.rated_at > seenAt;
-      const liked = DB.isLiked(e.key);
-      const label = `${e.t.title}${e.t.year ? ` (${e.t.year})` : ''}, ${e.t.media_type === 'tv' ? 'TV show' : 'film'}, rated ${fmtRating(e.log.rating)} out of 10${liked ? ', liked' : ''}${isNew ? ', new' : ''}`;
+      const label = `${e.t.title}${e.t.year ? ` (${e.t.year})` : ''}, ${e.t.media_type === 'tv' ? 'TV show' : 'film'}${isNew ? ', new on your wall' : ''}`;
       return `<a class="wall-tile ${isNew && firstPaint ? 'await-pin' : ''}" href="${titleHref(e.t.media_type, e.t.tmdb_id)}" aria-label="${esc(label)}" style="--rot:${tiltFor(e.key)}deg">
-        ${posterBox(e.t)}
-        <span class="badge wall-chip" aria-hidden="true"><span class="b-star">\u2605</span>${esc(fmtRating(e.log.rating))}${liked ? `<span class="liked-mark">${ICONS.heartFill}</span>` : ''}</span>
+        ${wallPosterHTML(e.t)}
         ${isNew ? '<span class="badge new-chip" aria-hidden="true">New</span>' : ''}
       </a>`;
     }).join('');
@@ -3353,10 +3357,6 @@ function viewWall(ctx) {
     savePrefs(); drawControls(); draw(false);
     toast(prefs.order === 'newest' ? 'Newest first' : 'Oldest first', { duration: 1400 });
   });
-  sizeBtn.addEventListener('click', (e) => openMenu(e.currentTarget, Object.entries(WALL_SIZES).map(([v, l]) => ({ value: v, label: `${l} posters`, checked: v === prefs.size })), (v) => {
-    prefs.size = v; savePrefs(); drawControls();
-    wallEl.dataset.size = v;
-  }, { label: 'Poster size' }));
 }
 
 /* ---- Watchlist ---- */
