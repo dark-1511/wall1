@@ -26,8 +26,8 @@
    ========================================================================= */
 :root {
   --font: -apple-system, BlinkMacSystemFont, system-ui, "SF Pro Text", "SF Pro", "Helvetica Neue", "Segoe UI", Roboto, sans-serif;
-  --sidebar-w: 15rem;
-  --tabbar-h: 3.25rem;
+  --sidebar-w: 16.25rem;
+  --tabbar-h: 3.875rem;
   --topbar-h: 2.75rem;
   --pad: 1rem;
   /* Corner radii scale with the size of the surface */
@@ -40,6 +40,12 @@
   --safe-b: env(safe-area-inset-bottom, 0px);
   --ease-out: cubic-bezier(.22, .8, .24, 1);
   --ease-in: cubic-bezier(.76, .2, .78, 0); /* mirror of --ease-out for reversible paths */
+  /* Springs sampled from a damped oscillator (damping ratio / response):
+     --spring 0.72 / 0.5s (a touch of bounce), --spring-soft 0.9 / 0.42s. */
+  --spring: cubic-bezier(.34, 1.3, .64, 1);
+  --spring-soft: cubic-bezier(.25, .9, .3, 1);
+  --spring-dur: .8s;
+  --spring-soft-dur: .55s;
 
   /* Light theme */
   --bg: #fbfbfd;
@@ -68,6 +74,19 @@
   --shadow-sm: 0 1px 2px rgba(0,0,0,.06), 0 2px 8px rgba(0,0,0,.05);
   --shadow-lg: 0 10px 40px rgba(0,0,0,.14), 0 2px 10px rgba(0,0,0,.06);
   --poster-edge: inset 0 0 0 .5px rgba(0,0,0,.1);
+  /* Liquid Glass: tint thickness scales with surface size; rims catch light */
+  --glass: rgba(255, 255, 255, .5);
+  --glass-thick: rgba(250, 250, 252, .72);
+  --glass-sheet: rgba(250, 250, 252, .9);
+  --glass-rim: rgba(255, 255, 255, .95);
+  --glass-rim-soft: rgba(255, 255, 255, .4);
+  --glass-edge: rgba(0, 0, 0, .07);
+  --glass-drop: rgba(0, 0, 0, .14);
+  --glass-sheen: rgba(255, 255, 255, .5);
+  --glass-glow: rgba(255, 255, 255, .75);
+  --glass-inner: rgba(255, 255, 255, .35);
+  --lens: rgba(118, 118, 128, .16);
+  --lens-seg: rgba(255, 255, 255, .95);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -97,6 +116,18 @@
     --shadow-sm: 0 1px 2px rgba(0,0,0,.5);
     --shadow-lg: 0 14px 44px rgba(0,0,0,.6);
     --poster-edge: inset 0 0 0 .5px rgba(255,255,255,.12);
+    --glass: rgba(46, 46, 50, .5);
+    --glass-thick: rgba(30, 30, 33, .68);
+    --glass-sheet: rgba(30, 30, 33, .92);
+    --glass-rim: rgba(255, 255, 255, .3);
+    --glass-rim-soft: rgba(255, 255, 255, .09);
+    --glass-edge: rgba(255, 255, 255, .05);
+    --glass-drop: rgba(0, 0, 0, .5);
+    --glass-sheen: rgba(255, 255, 255, .12);
+    --glass-glow: rgba(255, 255, 255, .28);
+    --glass-inner: rgba(255, 255, 255, .06);
+    --lens: rgba(255, 255, 255, .13);
+    --lens-seg: rgba(99, 99, 104, .9);
   }
 }
 :root[data-theme="dark"] {
@@ -126,10 +157,29 @@
   --shadow-sm: 0 1px 2px rgba(0,0,0,.5);
   --shadow-lg: 0 14px 44px rgba(0,0,0,.6);
   --poster-edge: inset 0 0 0 .5px rgba(255,255,255,.12);
+  --glass: rgba(46, 46, 50, .5);
+  --glass-thick: rgba(30, 30, 33, .68);
+  --glass-sheet: rgba(30, 30, 33, .92);
+  --glass-rim: rgba(255, 255, 255, .3);
+  --glass-rim-soft: rgba(255, 255, 255, .09);
+  --glass-edge: rgba(255, 255, 255, .05);
+  --glass-drop: rgba(0, 0, 0, .5);
+  --glass-sheen: rgba(255, 255, 255, .12);
+  --glass-glow: rgba(255, 255, 255, .28);
+  --glass-inner: rgba(255, 255, 255, .06);
+  --lens: rgba(255, 255, 255, .13);
+  --lens-seg: rgba(99, 99, 104, .9);
 }
 :root[data-theme="dark"], :root[data-theme="light"] { color-scheme: normal; }
 :root[data-theme="dark"] { color-scheme: dark; }
 :root[data-theme="light"] { color-scheme: light; }
+
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    --spring: linear(0, 0.0286, 0.0998, 0.197, 0.307, 0.4202, 0.5295, 0.6305, 0.7202, 0.7974, 0.8618, 0.9139, 0.9546, 0.9854, 1.0076, 1.0226, 1.0318, 1.0366, 1.0379, 1.0369, 1.0342, 1.0304, 1.0263, 1.022, 1.0178, 1.014, 1.0106, 1.0077, 1.0052, 1.0033, 1.0017, 1.0005, 0.9997, 0.9991, 0.9988, 0.9986, 0.9986, 0.9986, 0.9987, 0.9988, 1);
+    --spring-soft: linear(0, 0.0193, 0.0674, 0.1357, 0.2121, 0.2927, 0.3733, 0.451, 0.524, 0.593, 0.6536, 0.7076, 0.7551, 0.7966, 0.8323, 0.8638, 0.8896, 0.9112, 0.9293, 0.9443, 0.9566, 0.9668, 0.9749, 0.9813, 0.9864, 0.9904, 0.9935, 0.9959, 0.9976, 0.9989, 0.9999, 1.0005, 1.0009, 1.0012, 1.0013, 1.0014, 1.0014, 1.0013, 1.0012, 1.0011, 1);
+  }
+}
 
 /* Theme changes ease instead of flashing */
 html.theme-anim, html.theme-anim *, html.theme-anim *::before, html.theme-anim *::after {
@@ -179,10 +229,75 @@ h1, h2, h3, h4, p { margin: 0; }
 .num { font-variant-numeric: tabular-nums; }
 
 /* =========================================================================
-   APP CHROME: top bar, sidebar, tab bar (translucent materials)
+   LIQUID GLASS
+   A floating control layer over content. Glass is used for navigation and
+   controls only (tab bar, sidebar, toolbars, buttons over imagery, sheets,
+   menus, toasts); reading surfaces stay solid. Glass is never stacked on
+   glass. Bigger surfaces read thicker (more tint, more blur, deeper shadow).
+   ========================================================================= */
+.glass {
+  --g-bg: var(--glass);
+  --g-blur: 14px;
+  position: relative; isolation: isolate;
+  background: var(--g-bg);
+  -webkit-backdrop-filter: blur(var(--g-blur)) saturate(190%) brightness(1.04);
+  backdrop-filter: blur(var(--g-blur)) saturate(190%) brightness(1.04);
+  /* Edge lighting gives the pane thickness, like a lens: light catches the
+     upper-left rim, a softer bounce returns along the lower-right, and a faint
+     inner glow sits just inside the edge. */
+  box-shadow:
+    inset 1.5px 1.5px 1px -1px var(--glass-rim),
+    inset -1px -1px 1px -.5px var(--glass-rim-soft),
+    inset 0 0 0 .5px var(--glass-rim-soft),
+    inset 0 0 12px 0 var(--glass-inner),
+    0 0 0 .5px var(--glass-edge),
+    0 10px 30px -10px var(--glass-drop),
+    0 2px 6px -2px var(--glass-drop);
+}
+/* Specular sheen: sits above the tint, below the content */
+.glass::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; pointer-events: none;
+  background: linear-gradient(180deg, var(--glass-sheen) 0%, transparent 46%),
+              linear-gradient(115deg, var(--glass-sheen) 0%, transparent 28%);
+  opacity: .8;
+}
+.glass-thick { --g-bg: var(--glass-thick); --g-blur: 30px; }
+
+/* Touch response: glass swells and lights up where it is pressed,
+   then springs back. Solid buttons keep their press-down. */
+.glass-press { transition: transform var(--spring-dur) var(--spring), background-color .2s; }
+.glass-press:not(.glass) { position: relative; isolation: isolate; }
+.glass-press::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; pointer-events: none;
+  background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%), var(--glass-glow), transparent 62%);
+  opacity: 0; transition: opacity .45s ease;
+}
+.glass-press.pressed { transform: scale(1.06); transition: transform .18s var(--ease-out), background-color .2s; }
+.glass-press.pressed::after { opacity: 1; transition: opacity .08s ease; }
+.btn.glass-press:active, .icon-btn.glass-press:active, .tab:active { transform: none; }
+.btn.glass-press.pressed, .icon-btn.glass-press.pressed { transform: scale(1.06); }
+
+/* Tinted ("prominent") glass for the primary action */
+.btn-primary.glass { --g-bg: color-mix(in srgb, var(--accent) 86%, transparent); color: var(--on-accent); }
+
+/* The lens: a glass selection indicator that slides between options on a
+   spring and stretches along its direction of travel. Positioned by JS. */
+.lens {
+  position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none;
+  border-radius: 999px; opacity: 0;
+  background: var(--lens);
+  box-shadow: inset 0 1px 0 0 var(--glass-rim-soft), inset 0 0 0 .5px var(--glass-rim-soft);
+  transform-origin: center; will-change: transform;
+  transition: opacity .2s ease;
+}
+.lens.ready { opacity: 1; }
+.lens-host > :not(.lens) { position: relative; z-index: 1; }
+
+/* =========================================================================
+   APP CHROME: floating glass top-bar controls, tab bar, sidebar
    ========================================================================= */
 .app { min-height: 100vh; min-height: 100dvh; }
-.main { position: relative; min-height: 100vh; min-height: 100dvh; padding-bottom: calc(var(--tabbar-h) + var(--safe-b) + 1.5rem); display: flex; flex-direction: column; }
+.main { position: relative; min-height: 100vh; min-height: 100dvh; padding-bottom: calc(var(--tabbar-h) + var(--safe-b) + 2.5rem); display: flex; flex-direction: column; }
 .view { flex: 1; outline: none; }
 
 .material {
@@ -191,87 +306,100 @@ h1, h2, h3, h4, p { margin: 0; }
   backdrop-filter: blur(20px) saturate(180%);
 }
 
-/* Top bar: content scrolls under it. Its material fades in with scroll and
-   feathers out at the bottom edge instead of drawing a hard divider. */
+/* Top bar: no bar at all, just glass controls floating over content, with a
+   soft scroll-edge blur that fades in as content passes underneath. */
 .topbar {
   position: sticky; top: 0; z-index: 30;
-  height: calc(var(--topbar-h) + var(--safe-t));
-  padding: var(--safe-t) .5rem 0;
+  height: calc(var(--topbar-h) + var(--safe-t) + .5rem);
+  padding: calc(var(--safe-t) + .375rem) .75rem .125rem;
   display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
   pointer-events: none;
 }
 .topbar > * { pointer-events: auto; }
 .topbar::before {
-  content: ""; position: absolute; inset: 0 0 -.75rem 0; z-index: -1;
-  background: var(--material);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - .75rem), transparent);
-  mask-image: linear-gradient(to bottom, #000 calc(100% - .75rem), transparent);
+  content: ""; position: absolute; inset: 0 0 -1.25rem 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--bg) 78%, transparent), color-mix(in srgb, var(--bg) 0%, transparent));
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 45%, transparent);
+  mask-image: linear-gradient(to bottom, #000 45%, transparent);
   opacity: var(--edge, 0);
 }
-.topbar-title { grid-column: 2; font-size: 1.0625rem; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60vw; opacity: 0; transform: translateY(.25rem); transition: opacity .2s ease, transform .25s var(--ease-out); }
+.topbar-title { grid-column: 2; font-size: 1rem; font-weight: 600; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55vw; opacity: 0; transform: translateY(.25rem); transition: opacity .2s ease, transform .25s var(--ease-out); }
 .topbar.show-title .topbar-title { opacity: 1; transform: none; }
 .topbar-left { grid-column: 1; justify-self: start; display: flex; }
-.topbar-right { grid-column: 3; justify-self: end; display: flex; gap: .25rem; }
-.back-btn { display: inline-flex; align-items: center; gap: .125rem; padding: .375rem .5rem .375rem .25rem; border: 0; background: none; color: var(--accent); font-size: 1.0625rem; cursor: pointer; border-radius: var(--r-sm); transition: transform 100ms ease-out, opacity .15s; }
-.back-btn:active { transform: scale(.96); opacity: .6; }
+.topbar-right { grid-column: 3; justify-self: end; display: flex; gap: .375rem; }
+.back-btn {
+  display: inline-flex; align-items: center; gap: .125rem; height: 2.5rem; padding: 0 .875rem 0 .5rem;
+  border: 0; border-radius: 999px; color: var(--label); font-size: .9375rem; font-weight: 600; cursor: pointer;
+  max-width: 45vw;
+}
+.back-btn #back-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .back-btn[hidden] { display: none; }
-.back-btn svg { width: 1.375rem; height: 1.375rem; }
+.back-btn svg { width: 1.25rem; height: 1.25rem; flex: none; }
+.topbar .theme-toggle { width: 2.5rem; height: 2.5rem; color: var(--label); }
+.topbar .theme-toggle:hover { background: var(--g-bg); }
 
 .sidebar { display: none; }
-.tabbar {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
-  height: calc(var(--tabbar-h) + var(--safe-b));
-  padding-bottom: var(--safe-b);
-  display: grid; grid-template-columns: repeat(4, 1fr);
-}
-.tabbar::before {
-  content: ""; position: absolute; inset: -.75rem 0 0 0; z-index: -1;
-  background: var(--material);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-mask-image: linear-gradient(to top, #000 calc(100% - .75rem), transparent);
-  mask-image: linear-gradient(to top, #000 calc(100% - .75rem), transparent);
-}
-.tab {
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .125rem;
-  color: var(--label-2); font-size: .6875rem; font-weight: 500; letter-spacing: .01em; text-decoration: none !important;
-  transition: transform 100ms ease-out, color .2s;
-}
-.tab svg { width: 1.5rem; height: 1.5rem; }
-.tab:active { transform: scale(.92); }
-.tab[aria-current="page"] { color: var(--accent); }
 
-html.setup-mode .tabbar, html.setup-mode .sidebar, html.setup-mode .topbar { display: none !important; }
+/* Phone tab bar: a floating glass capsule with a sliding lens */
+.tabbar {
+  position: fixed; z-index: 30;
+  left: max(.75rem, env(safe-area-inset-left)); right: max(.75rem, env(safe-area-inset-right));
+  bottom: calc(var(--safe-b) + .625rem);
+  max-width: 28rem; margin: 0 auto;
+  height: var(--tabbar-h); padding: .3125rem;
+  border-radius: 999px;
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  --g-bg: var(--glass-thick); --g-blur: 18px;
+}
+.tabbar .lens { background: var(--lens); }
+.tab {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .0625rem;
+  border-radius: 999px; color: var(--label); font-size: .625rem; font-weight: 600; letter-spacing: .012em; text-decoration: none !important;
+  transition: color .25s ease;
+}
+.tab svg { width: 1.375rem; height: 1.375rem; }
+.tab[aria-current="page"] { color: var(--accent); }
+/* Scroll edge behind the floating tab bar: content softens as it passes under */
+.tabbar-edge {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 29; pointer-events: none;
+  height: calc(var(--safe-b) + 5.5rem);
+  background: linear-gradient(to top, color-mix(in srgb, var(--bg) 72%, transparent), color-mix(in srgb, var(--bg) 0%, transparent));
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  -webkit-mask-image: linear-gradient(to top, #000 35%, transparent); mask-image: linear-gradient(to top, #000 35%, transparent);
+}
+
+html.setup-mode .tabbar, html.setup-mode .tabbar-edge, html.setup-mode .sidebar, html.setup-mode .topbar { display: none !important; }
 html.setup-mode .main { margin-left: 0 !important; padding-bottom: 0; }
 
 @media (min-width: 60rem) {
   :root { --pad: 2rem; }
+  /* Desktop sidebar: a floating panel of thick glass (structural, so heavier) */
   .sidebar {
     display: flex; flex-direction: column; gap: .125rem;
-    position: fixed; top: 0; bottom: 0; left: 0; width: var(--sidebar-w); z-index: 31;
-    padding: calc(var(--safe-t) + 1.25rem) .75rem 1rem;
-    background: var(--material-heavy);
-    -webkit-backdrop-filter: blur(30px) saturate(180%);
-    backdrop-filter: blur(30px) saturate(180%);
-    box-shadow: inset -.5px 0 0 var(--separator);
+    position: fixed; top: .75rem; bottom: .75rem; left: .75rem; width: calc(var(--sidebar-w) - 1.25rem); z-index: 31;
+    padding: calc(var(--safe-t) + 1.125rem) .625rem .875rem;
+    border-radius: 1.5rem;
+    --g-bg: var(--glass-thick); --g-blur: 34px;
   }
+  .sidebar .lens { border-radius: .75rem; }
   .brand { display: flex; align-items: center; gap: .625rem; padding: 0 .625rem 1.25rem; font-size: 1.375rem; font-weight: 700; letter-spacing: -.02em; color: var(--label); text-decoration: none !important; }
   .brand svg { width: 1.75rem; height: 1.75rem; }
   .side-link {
-    display: flex; align-items: center; gap: .75rem; padding: .5rem .625rem; border-radius: var(--r-sm);
+    display: flex; align-items: center; gap: .75rem; padding: .5rem .625rem; border-radius: .75rem;
     color: var(--label); font-size: .9375rem; font-weight: 500; text-decoration: none !important;
     transition: background-color .15s, transform 100ms ease-out;
   }
   .side-link svg { width: 1.25rem; height: 1.25rem; color: var(--accent); flex: none; }
   .side-link:hover { background: var(--fill); }
   .side-link:active { transform: scale(.98); }
-  .side-link[aria-current="page"] { background: var(--fill-strong); font-weight: 600; }
+  .side-link[aria-current="page"] { font-weight: 600; }
+  .sidebar:not(.has-lens) .side-link[aria-current="page"] { background: var(--lens); }
   .side-sep { height: 1rem; }
   .side-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; padding: 0 .25rem 0 .625rem; }
   .main { margin-left: var(--sidebar-w); padding-bottom: 2rem; }
-  .tabbar { display: none; }
+  .tabbar, .tabbar-edge { display: none; }
   .topbar .theme-toggle { display: none; }
   .large-title { font-size: 2.625rem; }
 }
@@ -327,15 +455,18 @@ html.setup-mode .main { margin-left: 0 !important; padding-bottom: 0; }
 .icon-btn:active { transform: scale(.9); }
 .icon-btn.filled { background: var(--fill); color: var(--label); }
 
-.seg { display: inline-flex; padding: .125rem; border-radius: calc(var(--r-sm) + .125rem); background: var(--fill); gap: .125rem; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.seg { position: relative; display: inline-flex; padding: .1875rem; border-radius: 999px; background: var(--fill); gap: .125rem; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.seg .lens { background: var(--lens-seg); box-shadow: inset 0 1px 0 0 var(--glass-rim), inset 0 0 0 .5px var(--glass-rim-soft), 0 1px 2px rgba(0,0,0,.12), 0 3px 10px -3px var(--glass-drop); }
 .seg::-webkit-scrollbar { display: none; }
 .seg button {
   appearance: none; border: 0; background: transparent; cursor: pointer; white-space: nowrap;
-  padding: .375rem .875rem; border-radius: var(--r-sm); font-size: .8125rem; font-weight: 500; color: var(--label);
-  transition: background-color .2s, box-shadow .2s, transform 100ms ease-out;
+  padding: .375rem .9375rem; border-radius: 999px; font-size: .8125rem; font-weight: 500; color: var(--label);
+  transition: background-color .2s, box-shadow .2s, transform 100ms ease-out, font-weight .2s;
 }
 .seg button:active { transform: scale(.96); }
 .seg button[aria-pressed="true"], .seg button[aria-selected="true"] { background: var(--bg-elev); box-shadow: var(--shadow-sm); font-weight: 600; }
+/* Once the lens is in place it carries the selection instead */
+.seg.has-lens button[aria-pressed="true"], .seg.has-lens button[aria-selected="true"] { background: transparent; box-shadow: none; }
 
 .field { display: flex; flex-direction: column; gap: .375rem; }
 .field-label { font-size: .8125rem; font-weight: 600; color: var(--label-2); letter-spacing: .002em; }
@@ -369,6 +500,22 @@ html.setup-mode .main { margin-left: 0 !important; padding-bottom: 0; }
 .check { display: flex; align-items: center; gap: .625rem; cursor: pointer; font-size: .9375rem; }
 .check input { width: 1.25rem; height: 1.25rem; accent-color: var(--accent); margin: 0; }
 
+/* Glass versions of controls. These come after the base control rules so the
+   glass tint and spring transitions win the cascade. */
+.btn.glass, .icon-btn.glass, .seg.glass, .chip.glass { background: var(--g-bg); }
+.btn.glass:hover, .icon-btn.glass:hover { filter: brightness(1.04); }
+.btn.glass-press, .icon-btn.glass-press, .tab.glass-press, .chip.glass-press {
+  transition: transform var(--spring-dur) var(--spring), background-color .2s, color .25s, filter .2s;
+}
+.btn.glass-press.pressed, .icon-btn.glass-press.pressed, .tab.glass-press.pressed, .chip.glass-press.pressed {
+  transform: scale(1.06); transition: transform .18s var(--ease-out), background-color .2s, color .25s;
+}
+.tab.glass-press.pressed { transform: scale(1.1); }
+.btn.glass { border-radius: 999px; }
+.btn.glass:not(.btn-primary) { color: var(--label); }
+.btn.glass.toggle-like[aria-pressed="true"] { color: var(--heart); }
+.btn.glass.toggle-watch[aria-pressed="true"] { color: var(--accent); }
+
 /* =========================================================================
    POSTERS, GRIDS, ROWS
    ========================================================================= */
@@ -376,6 +523,7 @@ html.setup-mode .main { margin-left: 0 !important; padding-bottom: 0; }
 @media (min-width: 40rem) { .grid { grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: 1.5rem 1rem; } }
 @media (min-width: 80rem) { .grid { grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); } }
 .row {
+  position: relative;
   display: grid; grid-auto-flow: column; grid-auto-columns: 6.75rem; gap: .75rem;
   overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory;
   padding: 0 var(--pad) .25rem; scroll-padding: 0 var(--pad); scrollbar-width: none;
@@ -389,10 +537,14 @@ html.setup-mode .main { margin-left: 0 !important; padding-bottom: 0; }
   .row-nav { display: grid; position: absolute; top: 35%; z-index: 2; opacity: 0; transition: opacity .2s; }
   .row-wrap:hover .row-nav, .row-nav:focus-visible { opacity: 1; }
   .row-nav.prev { left: .5rem; } .row-nav.next { right: .5rem; }
-  .row-nav .icon-btn { background: var(--material-menu); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); box-shadow: var(--shadow-sm); color: var(--label); }
+  .row-nav .icon-btn { color: var(--label); width: 2.5rem; height: 2.5rem; }
+  .row-nav .icon-btn:hover { background: var(--g-bg); }
 }
 
-.card { display: block; color: inherit; text-decoration: none !important; min-width: 0; transition: transform 100ms ease-out; border-radius: var(--r-md); }
+/* position: relative keeps absolutely positioned descendants (badges, and the
+   visually hidden screen-reader text) inside the card, so they can't escape a
+   scrolling row and widen the page on phones. */
+.card { position: relative; display: block; color: inherit; text-decoration: none !important; min-width: 0; transition: transform 100ms ease-out; border-radius: var(--r-md); }
 .poster {
   position: relative; aspect-ratio: 2 / 3; border-radius: var(--r-md); overflow: hidden;
   background: var(--fill);
@@ -405,14 +557,15 @@ html.setup-mode .main { margin-left: 0 !important; padding-bottom: 0; }
 .badge {
   display: inline-flex; align-items: center; gap: .1875rem;
   font-size: .6875rem; font-weight: 700; line-height: 1; letter-spacing: .01em; font-variant-numeric: tabular-nums;
-  padding: .25rem .375rem; border-radius: var(--r-xs);
-  background: rgba(0, 0, 0, .66); color: #fff;
-  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  padding: .25rem .4375rem; border-radius: 999px;
+  background: rgba(22, 22, 24, .52); color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.34), inset 0 0 0 .5px rgba(255,255,255,.16), 0 1px 4px rgba(0,0,0,.25);
+  -webkit-backdrop-filter: blur(6px) saturate(160%); backdrop-filter: blur(6px) saturate(160%);
 }
 .badge svg { width: .75rem; height: .75rem; }
 .badge .b-star { color: #ffc34d; }
 .badge-wl { margin-left: auto; }
-.rank { position: absolute; top: .3125rem; left: .3125rem; min-width: 1.5rem; text-align: center; font-size: .75rem; font-weight: 700; padding: .25rem .375rem; border-radius: var(--r-xs); background: rgba(0,0,0,.66); color: #fff; font-variant-numeric: tabular-nums; }
+.rank { position: absolute; top: .3125rem; left: .3125rem; min-width: 1.5rem; text-align: center; font-size: .75rem; font-weight: 700; padding: .25rem .4375rem; border-radius: 999px; background: rgba(22,22,24,.55); color: #fff; font-variant-numeric: tabular-nums; box-shadow: inset 0 1px 0 rgba(255,255,255,.34), inset 0 0 0 .5px rgba(255,255,255,.16), 0 1px 4px rgba(0,0,0,.25); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 .card-title { margin-top: .5rem; font-size: .8125rem; font-weight: 600; line-height: 1.25; letter-spacing: -.004em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .card-meta { margin-top: .1875rem; display: flex; align-items: center; gap: .375rem; font-size: .75rem; color: var(--label-2); font-variant-numeric: tabular-nums; }
 .type-tag {
@@ -484,8 +637,9 @@ html.setup-mode .main { margin-left: 0 !important; padding-bottom: 0; }
 .facts li { display: inline-flex; align-items: center; gap: .3125rem; }
 .tagline { font-style: italic; color: var(--label-2); margin-bottom: .5rem; }
 .chips { display: flex; flex-wrap: wrap; gap: .375rem; margin-top: .75rem; }
-.chip { display: inline-flex; align-items: center; padding: .3125rem .625rem; border-radius: 999px; background: var(--fill); color: var(--label); font-size: .8125rem; font-weight: 500; text-decoration: none !important; transition: transform 100ms ease-out, background-color .15s; }
-.chip:hover { background: var(--fill-strong); }
+.chip { display: inline-flex; align-items: center; padding: .3125rem .75rem; border-radius: 999px; background: var(--fill); color: var(--label); font-size: .8125rem; font-weight: 600; text-decoration: none !important; transition: transform 100ms ease-out, background-color .15s; }
+.chip.glass { --g-blur: 10px; }
+.chip:not(.glass):hover { background: var(--fill-strong); }
 .actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.25rem; }
 .actions .btn-primary { flex: 1 1 100%; }
 .actions .btn:not(.btn-primary) { flex: 1 1 6rem; }
@@ -512,8 +666,12 @@ html.setup-mode .main { margin-left: 0 !important; padding-bottom: 0; }
 .trailer button { position: absolute; inset: 0; border: 0; padding: 0; cursor: pointer; background: #000; }
 .trailer button img { width: 100%; height: 100%; object-fit: cover; opacity: .82; transition: opacity .2s; }
 .trailer button:hover img { opacity: 1; }
-.trailer .play { position: absolute; left: 50%; top: 50%; width: 4rem; height: 4rem; margin: -2rem 0 0 -2rem; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.28); -webkit-backdrop-filter: blur(16px) saturate(160%); backdrop-filter: blur(16px) saturate(160%); color: #fff; transition: transform 100ms ease-out; }
-.trailer button:active .play { transform: scale(.94); }
+.trailer .play { position: absolute; left: 50%; top: 50%; width: 4.25rem; height: 4.25rem; margin: -2.125rem 0 0 -2.125rem; border-radius: 50%; display: grid; place-items: center; color: #fff;
+  background: rgba(255,255,255,.2); -webkit-backdrop-filter: blur(14px) saturate(180%); backdrop-filter: blur(14px) saturate(180%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.7), inset 0 -1px 0 rgba(255,255,255,.2), inset 0 0 0 .5px rgba(255,255,255,.35), 0 8px 24px rgba(0,0,0,.3);
+  transition: transform var(--spring-dur) var(--spring); }
+.trailer button:hover .play { transform: scale(1.06); }
+.trailer button:active .play { transform: scale(1.1); transition-duration: .18s; }
 .trailer .play svg { width: 1.75rem; height: 1.75rem; margin-left: .2rem; }
 .trailer iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 
@@ -551,23 +709,28 @@ html.setup-mode .main { margin-left: 0 !important; padding-bottom: 0; }
    ========================================================================= */
 .scrim { position: fixed; inset: 0; z-index: 60; background: var(--scrim); opacity: 0; }
 .sheet {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 61;
+  position: fixed; left: .5rem; right: .5rem; bottom: calc(var(--safe-b) + .5rem); z-index: 61;
   max-height: calc(100dvh - var(--safe-t) - 2.5rem);
   display: flex; flex-direction: column;
-  background: var(--bg-elev); color: var(--label);
-  border-radius: var(--r-xl) var(--r-xl) 0 0;
-  box-shadow: var(--shadow-lg);
-  padding-bottom: var(--safe-b);
+  color: var(--label);
+  border-radius: 2rem;
+  /* Big surface = thick glass: heavy tint for legible forms, strong blur */
+  background: var(--glass-sheet);
+  -webkit-backdrop-filter: blur(40px) saturate(190%);
+  backdrop-filter: blur(40px) saturate(190%);
+  box-shadow: inset 0 1px 0 0 var(--glass-rim), inset 0 0 0 .5px var(--glass-rim-soft), 0 0 0 .5px var(--glass-edge), 0 24px 60px -12px rgba(0,0,0,.35);
   will-change: transform, opacity;
   transform: translate3d(0, 100%, 0);
 }
-.sheet-head { touch-action: none; cursor: grab; flex: none; padding: 0 .75rem 0 1.25rem; }
+.sheet-head { touch-action: none; cursor: grab; flex: none; padding: 0 .875rem 0 1.375rem; }
 .sheet-head:active { cursor: grabbing; }
 .grabber { width: 2.25rem; height: .3125rem; border-radius: 99px; background: var(--fill-strong); margin: .5rem auto .375rem; }
 .sheet-bar { display: flex; align-items: center; justify-content: space-between; gap: .5rem; min-height: 2.75rem; }
 .sheet-title { font-size: 1.1875rem; font-weight: 700; letter-spacing: -.014em; }
-.sheet-body { overflow-y: auto; overscroll-behavior: contain; padding: .5rem 1.25rem 1.5rem; -webkit-overflow-scrolling: touch; }
-.sheet-foot { display: flex; gap: .625rem; padding: .75rem 1.25rem 1rem; flex: none; box-shadow: 0 -.5px 0 var(--separator); }
+.sheet-body { overflow-y: auto; overscroll-behavior: contain; padding: .5rem 1.375rem 1.5rem; -webkit-overflow-scrolling: touch; }
+.sheet-foot { display: flex; gap: .625rem; padding: .75rem 1rem 1rem; flex: none; box-shadow: 0 -.5px 0 var(--separator); }
+.sheet-foot .btn { border-radius: 999px; min-height: 2.875rem; }
+.sheet .sheet-close { background: var(--fill); color: var(--label); }
 .sheet-foot .btn { flex: 1; }
 @media (min-width: 45rem) {
   .sheet {
@@ -575,7 +738,7 @@ html.setup-mode .main { margin-left: 0 !important; padding-bottom: 0; }
     translate: -50% -50%;
     width: min(34rem, calc(100vw - 3rem));
     max-height: min(46rem, calc(100dvh - 4rem));
-    border-radius: var(--r-xl); padding-bottom: 0;
+    border-radius: 2rem; padding-bottom: 0;
   }
   .sheet.wide { width: min(44rem, calc(100vw - 3rem)); }
   .sheet-head { cursor: default; touch-action: auto; padding-top: .75rem; }
@@ -588,19 +751,20 @@ html.setup-mode .main { margin-left: 0 !important; padding-bottom: 0; }
 
 .menu {
   position: fixed; z-index: 70; min-width: 13rem; max-width: calc(100vw - 1rem); padding: .375rem;
-  border-radius: var(--r-lg);
-  background: var(--material-menu);
-  -webkit-backdrop-filter: blur(30px) saturate(180%);
-  backdrop-filter: blur(30px) saturate(180%);
-  box-shadow: var(--shadow-lg), inset 0 0 0 .5px var(--material-edge);
+  border-radius: 1.375rem;
+  background: var(--glass-sheet);
+  -webkit-backdrop-filter: blur(0px) saturate(100%);
+  backdrop-filter: blur(0px) saturate(100%);
+  box-shadow: inset 0 1px 0 0 var(--glass-rim), inset 0 0 0 .5px var(--glass-rim-soft), 0 0 0 .5px var(--glass-edge), 0 18px 50px -10px rgba(0,0,0,.3);
   opacity: 0; transform: scale(.4);
-  transition: transform .32s var(--ease-out), opacity .2s ease;
+  transition: transform .5s var(--spring-soft), opacity .2s ease, -webkit-backdrop-filter .35s ease, backdrop-filter .35s ease;
 }
-.menu.open { opacity: 1; transform: scale(1); }
-.menu.closing { transition: transform .22s var(--ease-in), opacity .18s ease .04s; }
+/* Materialize: blur and scale arrive together, rather than a plain fade */
+.menu.open { opacity: 1; transform: scale(1); -webkit-backdrop-filter: blur(30px) saturate(190%); backdrop-filter: blur(30px) saturate(190%); }
+.menu.closing { transition: transform .22s var(--ease-in), opacity .18s ease .04s, -webkit-backdrop-filter .2s ease, backdrop-filter .2s ease; }
 .menu-item {
-  display: flex; width: 100%; align-items: center; gap: .625rem; padding: .5625rem .75rem;
-  border: 0; background: transparent; border-radius: var(--r-sm); cursor: pointer; text-align: left;
+  display: flex; width: 100%; align-items: center; gap: .625rem; padding: .5625rem .875rem;
+  border: 0; background: transparent; border-radius: 1rem; cursor: pointer; text-align: left;
   font-size: .9375rem; color: var(--label);
 }
 .menu-item:hover, .menu-item:focus-visible { background: var(--fill); outline: none; }
@@ -608,17 +772,15 @@ html.setup-mode .main { margin-left: 0 !important; padding-bottom: 0; }
 .menu-item[aria-checked="true"] .tick { visibility: visible; }
 .menu-item[aria-checked="true"] { font-weight: 600; }
 
-.toast-region { position: fixed; left: 0; right: 0; bottom: calc(var(--tabbar-h) + var(--safe-b) + .75rem); z-index: 90; display: flex; justify-content: center; pointer-events: none; padding: 0 1rem; }
+.toast-region { position: fixed; left: 0; right: 0; bottom: calc(var(--tabbar-h) + var(--safe-b) + 1.375rem); z-index: 90; display: flex; justify-content: center; pointer-events: none; padding: 0 1rem; }
 @media (min-width: 60rem) { .toast-region { bottom: 1.5rem; left: var(--sidebar-w); } }
 .toast {
   pointer-events: auto; display: flex; align-items: center; gap: .75rem; max-width: 30rem;
-  padding: .625rem .625rem .625rem 1rem; min-height: 2.75rem; border-radius: 999px;
-  background: var(--material-menu); color: var(--label);
-  -webkit-backdrop-filter: blur(30px) saturate(180%); backdrop-filter: blur(30px) saturate(180%);
-  box-shadow: var(--shadow-lg), inset 0 0 0 .5px var(--material-edge);
-  font-size: .9375rem; font-weight: 500;
-  opacity: 0; transform: translateY(120%) scale(.96);
-  transition: transform .38s var(--ease-out), opacity .25s ease;
+  padding: .625rem .5rem .625rem 1rem; min-height: 2.875rem; border-radius: 999px;
+  color: var(--label); font-size: .9375rem; font-weight: 600;
+  --g-bg: var(--glass-thick); --g-blur: 24px;
+  opacity: 0; transform: translateY(120%) scale(.94);
+  transition: transform var(--spring-soft-dur) var(--spring-soft), opacity .25s ease;
 }
 .toast.show { opacity: 1; transform: none; }
 .toast.hide { transition: transform .26s var(--ease-in), opacity .2s ease; }
@@ -626,7 +788,7 @@ html.setup-mode .main { margin-left: 0 !important; padding-bottom: 0; }
 .toast .t-icon { width: 1.125rem; height: 1.125rem; flex: none; color: var(--success); display: inline-flex; }
 .toast.error .t-icon { color: var(--danger); }
 .toast .t-icon svg { width: 100%; height: 100%; }
-.toast .btn { min-height: 2rem; padding: .25rem .75rem; border-radius: 999px; }
+.toast .btn { min-height: 2rem; padding: .25rem .875rem; border-radius: 999px; white-space: nowrap; flex: none; }
 
 /* =========================================================================
    PROFILE
@@ -668,7 +830,8 @@ html.setup-mode .main { margin-left: 0 !important; padding-bottom: 0; }
 .activity .what { flex: 1; min-width: 0; }
 .activity .what strong { font-weight: 600; }
 .activity .when { font-size: .8125rem; color: var(--label-2); white-space: nowrap; }
-.tabs-bar { position: sticky; top: calc(var(--topbar-h) + var(--safe-t)); z-index: 5; padding: .5rem 0; margin-top: 2rem; }
+.tabs-bar { position: sticky; top: calc(var(--topbar-h) + var(--safe-t) + .5rem); z-index: 5; padding: .25rem 0; margin-top: 2rem; display: flex; }
+.tabs-bar .seg.glass { padding: .25rem; }
 
 /* Reviews list */
 .review-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; max-width: 50rem; }
@@ -718,6 +881,64 @@ html.setup-mode .main { margin-left: 0 !important; padding-bottom: 0; }
 .site-footer svg { height: .875rem; width: auto; flex: none; }
 html.setup-mode .site-footer { display: none; }
 
+/* =========================================================================
+   WALL: every rated title, pinned up as a poster
+   ========================================================================= */
+.wall-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: .25rem 0 1rem; }
+.wall-toolbar {
+  position: sticky; top: calc(var(--topbar-h) + var(--safe-t) + .5rem); z-index: 6;
+  display: flex; align-items: center; gap: .375rem; width: fit-content; max-width: 100%;
+  margin: 0 auto 1rem; padding: .3125rem; border-radius: 999px;
+  --g-bg: var(--glass-thick); --g-blur: 20px;
+}
+.wall-toolbar .seg { background: transparent; padding: 0; }
+.wall-toolbar .icon-btn { width: 2.25rem; height: 2.25rem; color: var(--label); }
+.wall-toolbar .icon-btn:hover { background: var(--fill); }
+.wall {
+  --tile: 6.25rem; --wall-gap: 4px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--tile), 1fr)); gap: var(--wall-gap);
+  margin: 0 calc(-1 * var(--pad)); padding: 0 var(--wall-gap);
+}
+.wall[data-size="s"] { --tile: 4.25rem; --wall-gap: 3px; }
+.wall[data-size="l"] { --tile: 9rem; --wall-gap: 6px; }
+@media (min-width: 40rem) {
+  .wall { --tile: 8rem; margin: 0; padding: 0; }
+  .wall[data-size="s"] { --tile: 5.5rem; }
+  .wall[data-size="l"] { --tile: 12rem; --wall-gap: 8px; }
+}
+.wall-tile {
+  position: relative; display: block; aspect-ratio: 2 / 3; overflow: hidden;
+  border-radius: .375rem; background: var(--fill); color: inherit; text-decoration: none !important;
+  content-visibility: auto; contain-intrinsic-size: auto 150px;
+  transition: transform var(--spring-soft-dur) var(--spring-soft), box-shadow .3s ease;
+}
+.wall[data-size="l"] .wall-tile { border-radius: .625rem; }
+.wall-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.wall-tile .poster { width: 100%; height: 100%; aspect-ratio: auto; border-radius: 0; }
+.wall-tile .poster::after { display: none; }
+.wall-tile::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: var(--poster-edge); pointer-events: none; }
+@media (hover: hover) {
+  .wall-tile:hover { transform: scale(1.05); z-index: 2; box-shadow: 0 12px 30px -8px rgba(0,0,0,.45); }
+}
+.wall-tile:active { transform: scale(.97); transition-duration: .1s; }
+.wall-chip { position: absolute; left: 4px; bottom: 4px; z-index: 1; font-size: .625rem; padding: .1875rem .375rem; }
+.wall[data-size="l"] .wall-chip { left: 6px; bottom: 6px; font-size: .75rem; padding: .25rem .5rem; }
+.wall[data-size="s"] .wall-chip { display: none; }
+.wall-chip .liked-mark { color: #ff6b93; }
+.wall-chip .liked-mark svg { width: .6875rem; height: .6875rem; }
+.new-chip { position: absolute; right: 4px; top: 4px; z-index: 1; font-size: .5625rem; padding: .1875rem .375rem; text-transform: none; }
+.wall[data-size="s"] .new-chip { font-size: 0; padding: 0; width: .5rem; height: .5rem; background: var(--accent); }
+/* Newly rated posters get pinned up: they drop in from slightly above,
+   a little tilted, and settle on a spring. */
+.wall-tile.pin { animation: pin-up var(--spring-dur) var(--spring) both; animation-delay: var(--d, 0ms); }
+.wall-tile.await-pin { opacity: 0; }
+.wall-tile:focus-visible { z-index: 3; outline-offset: 2px; }
+@keyframes pin-up {
+  0% { opacity: 0; transform: translateY(-22px) scale(1.14) rotate(var(--rot, -4deg)); }
+  30% { opacity: 1; }
+  100% { opacity: 1; transform: none; }
+}
+
 /* Shown only when browser storage is blocked; sits in the page flow so it never covers controls */
 .storage-note {
   display: flex; gap: .625rem; align-items: flex-start;
@@ -739,23 +960,41 @@ html.setup-mode .storage-note { max-width: 28rem; margin-left: auto; margin-righ
   .skel { animation: none; }
   .spinner { animation-duration: 1.6s; }
   .row { scroll-behavior: auto; }
+  .glass-press, .glass-press.pressed, .btn.glass-press.pressed, .icon-btn.glass-press.pressed { transform: none !important; transition: background-color .2s !important; }
+  .wall-tile.pin { animation: pin-fade .3s ease both; animation-delay: 0ms; }
+  .wall-tile:hover { transform: none; }
+  .trailer .play, .trailer button:hover .play { transform: none; transition: none; }
 }
+@keyframes pin-fade { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-transparency: reduce) {
-  .topbar::before, .tabbar::before, .sidebar, .menu, .toast, .material, .row-nav .icon-btn, .badge, .trailer .play {
+  .topbar::before, .material, .trailer .play {
     -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
   }
-  .topbar::before, .tabbar::before { background: var(--bg); }
-  .sidebar { background: var(--bg-grouped); }
-  .menu, .toast { background: var(--bg-elev); }
+  .topbar::before { background: var(--bg); }
+  /* Frosted-to-solid: glass becomes opaque surfaces with a clear edge */
+  .glass, .sheet, .menu, .menu.open, .badge, .rank, .tabbar-edge {
+    -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  }
+  .glass { --g-bg: var(--bg-elev); }
+  .glass::before { display: none; }
+  .btn-primary.glass { --g-bg: var(--accent); }
+  .sheet, .menu { background: var(--bg-elev); }
+  .tabbar-edge { background: linear-gradient(to top, var(--bg), transparent); }
+  .badge, .rank { background: rgba(22,22,24,.86); }
+  .lens { background: var(--fill-strong); }
+  .seg .lens { background: var(--bg-elev); }
   .hero-bg img { filter: blur(40px) saturate(1.2); opacity: .5; }
 }
 @media (prefers-contrast: more) {
   :root { --label-2: #3a3a3f; --separator: rgba(0,0,0,.45); --fill: rgba(118,118,128,.2); --fill-strong: rgba(60,60,67,.45); }
   :root[data-theme="dark"] { --label-2: #d1d1d6; --separator: rgba(255,255,255,.5); --fill-strong: rgba(235,235,245,.45); }
-  .topbar::before, .tabbar::before { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; }
-  .tabbar { box-shadow: inset 0 1px 0 var(--separator); }
-  .sidebar { background: var(--bg-grouped); box-shadow: inset -1px 0 0 var(--separator); }
-  .menu, .toast, .sheet, .panel, .group, .tile, .stat, .banner, .review-item { box-shadow: inset 0 0 0 1px var(--separator); }
+  .topbar::before { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .menu, .toast, .sheet, .panel, .group, .tile, .stat, .banner, .review-item, .glass { box-shadow: inset 0 0 0 1px var(--separator); }
+  .glass { --g-bg: var(--bg-elev); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .glass::before, .glass-press::after { display: none; }
+  .sheet, .menu, .menu.open { background: var(--bg-elev); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .lens { box-shadow: inset 0 0 0 1.5px var(--label); background: transparent; }
+  .badge, .rank { background: #000; box-shadow: inset 0 0 0 1px rgba(255,255,255,.6); }
   .btn { box-shadow: inset 0 0 0 1px var(--separator); }
   .type-tag { box-shadow: inset 0 0 0 1px currentColor; }
 }
@@ -772,10 +1011,11 @@ html.setup-mode .storage-note { max-width: 28rem; margin-left: auto; margin-righ
 <a class="skip-link" href="#view">Skip to content</a>
 <div class="app">
   <!-- Desktop sidebar (translucent, structural) -->
-  <nav class="sidebar" aria-label="Main">
+  <nav class="sidebar glass glass-thick" aria-label="Main">
     <a class="brand" href="#/home" aria-label="Wall home"><span data-icon="logo"></span>Wall</a>
     <a class="side-link" href="#/home" data-nav="home"><span data-icon="home"></span>Home</a>
     <a class="side-link" href="#/search" data-nav="search"><span data-icon="search"></span>Search</a>
+    <a class="side-link" href="#/wall" data-nav="wall"><span data-icon="wall"></span>Wall</a>
     <a class="side-link" href="#/browse" data-nav="browse"><span data-icon="browse"></span>Browse</a>
     <a class="side-link" href="#/lists" data-nav="lists"><span data-icon="trophy"></span>Top lists</a>
     <div class="side-sep" aria-hidden="true"></div>
@@ -792,11 +1032,11 @@ html.setup-mode .storage-note { max-width: 28rem; margin-left: auto; margin-righ
   <div class="main">
     <header class="topbar" id="topbar">
       <div class="topbar-left">
-        <button class="back-btn" id="back-btn" type="button" hidden><span data-icon="chevronLeft"></span><span id="back-label">Back</span></button>
+        <button class="back-btn glass glass-press" id="back-btn" type="button" hidden><span data-icon="chevronLeft"></span><span id="back-label">Back</span></button>
       </div>
       <div class="topbar-title" id="topbar-title" aria-hidden="true"></div>
       <div class="topbar-right">
-        <button class="icon-btn theme-toggle" type="button" aria-label="Switch to dark mode"></button>
+        <button class="icon-btn theme-toggle glass glass-press" type="button" aria-label="Switch to dark mode"></button>
       </div>
     </header>
     <main id="view" class="view" tabindex="-1"></main>
@@ -807,11 +1047,13 @@ html.setup-mode .storage-note { max-width: 28rem; margin-left: auto; margin-righ
   </div>
 
   <!-- Phone tab bar -->
-  <nav class="tabbar" aria-label="Main">
-    <a class="tab" href="#/home" data-nav="home"><span data-icon="home"></span>Home</a>
-    <a class="tab" href="#/search" data-nav="search"><span data-icon="search"></span>Search</a>
-    <a class="tab" href="#/watchlist" data-nav="watchlist"><span data-icon="bookmark"></span>Watchlist</a>
-    <a class="tab" href="#/profile" data-nav="profile"><span data-icon="person"></span>Profile</a>
+  <div class="tabbar-edge" aria-hidden="true"></div>
+  <nav class="tabbar glass" aria-label="Main">
+    <a class="tab glass-press" href="#/home" data-nav="home"><span data-icon="home"></span>Home</a>
+    <a class="tab glass-press" href="#/search" data-nav="search"><span data-icon="search"></span>Search</a>
+    <a class="tab glass-press" href="#/wall" data-nav="wall"><span data-icon="wall"></span>Wall</a>
+    <a class="tab glass-press" href="#/watchlist" data-nav="watchlist"><span data-icon="bookmark"></span>Watchlist</a>
+    <a class="tab glass-press" href="#/profile" data-nav="profile"><span data-icon="person"></span>Profile</a>
   </nav>
 </div>
 <div class="toast-region" id="toast-region" role="status" aria-live="polite"></div>
@@ -836,13 +1078,14 @@ html.setup-mode .storage-note { max-width: 28rem; margin-left: auto; margin-righ
 
 /* ============================== 1. CONFIG ================================== */
 const CONFIG = {
-  SCHEMA_VERSION: 1,
+  SCHEMA_VERSION: 2,
   KEYS: {
     data: 'wall.data',
     apiKey: 'wall.tmdbKey',
     theme: 'wall.theme',
     persistAsked: 'wall.persistAsked',
-    apiHost: 'wall.tmdbHost'
+    apiHost: 'wall.tmdbHost',
+    wallPrefs: 'wall.wallPrefs'
   },
   /* TMDB serves the same API from two domains. Some internet providers (Jio and
      Airtel in India, among others) block themoviedb.org, so Wall falls back to
@@ -1001,6 +1244,9 @@ const ICONS = {
   upload: svg('<path d="M12 15.5v-11M7 9l5-5 5 5M4.5 19.5h15"/>'),
   play: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M7 4.8v14.4a1 1 0 001.5.86l11.7-7.2a1 1 0 000-1.72L8.5 3.94A1 1 0 007 4.8z"/></svg>',
   sort: svg('<path d="M7 4v16M3.5 16.5L7 20l3.5-3.5M17 20V4M13.5 7.5L17 4l3.5 3.5"/>'),
+  wall: svg('<rect x="3" y="3.5" width="5" height="7.5" rx="1.2"/><rect x="9.5" y="3.5" width="5" height="7.5" rx="1.2"/><rect x="16" y="3.5" width="5" height="7.5" rx="1.2"/><rect x="3" y="13" width="5" height="7.5" rx="1.2"/><rect x="9.5" y="13" width="5" height="7.5" rx="1.2"/><rect x="16" y="13" width="5" height="7.5" rx="1.2"/>'),
+  arrowDown: svg('<path d="M12 4.5v15M6 13.5l6 6 6-6"/>'),
+  arrowUp: svg('<path d="M12 19.5v-15M6 10.5l6-6 6 6"/>'),
   edit: svg('<path d="M4 20h4L19 9a2.8 2.8 0 00-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/>'),
   camera: svg('<path d="M4 8a2 2 0 012-2h1.8l1.4-2h5.6l1.4 2H18a2 2 0 012 2v9.5a2 2 0 01-2 2H6a2 2 0 01-2-2V8z"/><circle cx="12" cy="12.5" r="3.5"/>'),
   alert: svg('<path d="M12 3.5l9.5 16.5h-19z"/><path d="M12 10v4.5M12 17.3v.2"/>'),
@@ -1050,19 +1296,20 @@ function emptyData() {
   return {
     schemaVersion: CONFIG.SCHEMA_VERSION,
     titles: {},      /* key -> { tmdb_id, media_type, title, year, poster_path, genre_ids, vote_average } */
-    logs: {},        /* key -> { watched_on, logged_at, updated_at, rating, review } */
+    logs: {},        /* key -> { watched_on, logged_at, updated_at, rating, rated_at, review } */
     likes: {},       /* key -> liked timestamp */
     watchlist: {},   /* key -> { added_at } */
     favourites: [],  /* up to 4 keys, in display order */
     profile: { name: '', bio: '', avatar: '' },
-    meta: { createdAt: Date.now(), lastExport: 0, reminderSnoozedUntil: 0 }
+    meta: { createdAt: Date.now(), lastExport: 0, reminderSnoozedUntil: 0, wallSeenAt: 0 }
   };
 }
 
 /**
  * Bring any older stored shape up to the current schema.
  * Version 0 = data written before schemaVersion existed (liked flag on logs,
- * favourites stored as objects). Each step upgrades one version.
+ * favourites stored as objects). Version 1 had no rated_at, which the Wall
+ * uses to keep each poster where it was first pinned. Each step upgrades one version.
  */
 function migrate(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Not a Wall data object');
@@ -1085,6 +1332,17 @@ function migrate(raw) {
         data.favourites = data.favourites.map((f) => (f && typeof f === 'object' && f.media_type) ? keyOf(f.media_type, f.tmdb_id) : f);
       }
       data.meta = Object.assign({ createdAt: Date.now(), lastExport: 0, reminderSnoozedUntil: 0 }, data.meta || {});
+    }
+    if (version === 1) {
+      /* Every existing rating goes on the wall at the time it was logged. */
+      if (data.logs && typeof data.logs === 'object') {
+        for (const log of Object.values(data.logs)) {
+          if (log && typeof log === 'object' && log.rating != null && !log.rated_at) log.rated_at = Number(log.logged_at) || Date.now();
+        }
+      }
+      /* Posters that were already rated shouldn't all animate in as new. */
+      data.meta = Object.assign({}, data.meta || {});
+      if (!data.meta.wallSeenAt) data.meta.wallSeenAt = Date.now();
     }
     version += 1;
     data.schemaVersion = version;
@@ -1128,11 +1386,13 @@ function sanitizeData(input) {
         updated_at: num(l.review.updated_at, num(l.review.created_at, logged))
       };
     }
+    const rating = isValidRating(l.rating) ? l.rating : null;
     out.logs[k] = {
       watched_on: isISODate(l.watched_on) ? l.watched_on : '',
       logged_at: logged,
       updated_at: num(l.updated_at, logged),
-      rating: isValidRating(l.rating) ? l.rating : null,
+      rating,
+      rated_at: rating != null ? (num(l.rated_at, logged) || logged) : null,
       review
     };
   }
@@ -1160,7 +1420,8 @@ function sanitizeData(input) {
   out.meta = {
     createdAt: num(meta.createdAt, Date.now()) || Date.now(),
     lastExport: num(meta.lastExport),
-    reminderSnoozedUntil: num(meta.reminderSnoozedUntil)
+    reminderSnoozedUntil: num(meta.reminderSnoozedUntil),
+    wallSeenAt: num(meta.wallSeenAt)
   };
   return { data: out, dropped };
 }
@@ -1189,7 +1450,10 @@ const DB = {
     const raw = Store.get(CONFIG.KEYS.data, null);
     if (!raw) { this.data = emptyData(); return; }
     try {
-      this.data = sanitizeData(migrate(JSON.parse(raw))).data;
+      const parsed = JSON.parse(raw);
+      this.data = sanitizeData(migrate(parsed)).data;
+      /* Write upgraded data back once, so migration doesn't rerun every visit */
+      if (parsed && parsed.schemaVersion !== CONFIG.SCHEMA_VERSION) this.save();
     } catch (e) {
       /* Keep the unreadable copy aside rather than destroying it. */
       Store.set(`${CONFIG.KEYS.data}.unreadable-${Date.now()}`, raw);
@@ -1239,11 +1503,16 @@ const DB = {
         ? { text, created_at: old.created_at, updated_at: old.text === text ? old.updated_at : now }
         : { text, created_at: now, updated_at: now };
     }
+    const r = isValidRating(rating) ? rating : null;
+    /* A poster keeps its place on the wall when a rating is edited; it only
+       gets a new place if the rating was cleared and given again. */
+    const ratedAt = r == null ? null : (prev && prev.rating != null && prev.rated_at ? prev.rated_at : now);
     this.data.logs[k] = {
       watched_on: isISODate(watched_on) ? watched_on : todayISO(),
       logged_at: prev ? prev.logged_at : now,
       updated_at: now,
-      rating: isValidRating(rating) ? rating : null,
+      rating: r,
+      rated_at: ratedAt,
       review
     };
     return this.save();
@@ -1516,7 +1785,7 @@ const Theme = {
  * on-screen value and carry velocity (px/s), so motion can be interrupted.
  */
 const Motion = {
-  spring({ from, to, velocity = 0, damping = 1, response = 0.35, onUpdate, onComplete }) {
+  spring({ from, to, velocity = 0, damping = 1, response = 0.35, restDelta = 0.4, restSpeed = 4, onUpdate, onComplete }) {
     const k = Math.pow((2 * Math.PI) / response, 2);
     const c = (4 * Math.PI * damping) / response;
     let x = from, v = velocity, last = performance.now(), raf = 0, stopped = false;
@@ -1527,7 +1796,8 @@ const Motion = {
       const n = Math.max(1, Math.ceil(dt / 0.004));
       const hdt = dt / n;
       for (let i = 0; i < n; i++) { const a = -k * (x - to) - c * v; v += a * hdt; x += v * hdt; }
-      if (Math.abs(v) < 4 && Math.abs(x - to) < 0.4) { x = to; v = 0; onUpdate(x, v); stopped = true; if (onComplete) onComplete(); return; }
+      /* Rest thresholds are in the value's own units (defaults suit pixels) */
+      if (Math.abs(v) < restSpeed && Math.abs(x - to) < restDelta) { x = to; v = 0; onUpdate(x, v); stopped = true; if (onComplete) onComplete(); return; }
       onUpdate(x, v);
       raf = requestAnimationFrame(step);
     };
@@ -1553,13 +1823,102 @@ const Motion = {
 
 /* ============================== 8. COMPONENTS ============================== */
 
+/* ---- Liquid Glass ---- */
+/**
+ * Lens: the glass selection indicator. It slides to the chosen option on a
+ * spring, stretching along its direction of travel in proportion to speed
+ * and narrowing slightly across it, then settles. Interruptible: a new move
+ * starts from wherever the lens is right now.
+ */
+const Lenses = new Set();
+const lensObserver = 'ResizeObserver' in window ? new ResizeObserver(() => {
+  Lenses.forEach((l) => { if (!l.host.isConnected) { Lenses.delete(l); lensObserver.unobserve(l.host); } else l.sync(); });
+}) : null;
+function Lens(host, { axis = 'x' } = {}) {
+  let lens = host.querySelector(':scope > .lens');
+  if (!lens) {
+    lens = document.createElement('span');
+    lens.className = 'lens';
+    lens.setAttribute('aria-hidden', 'true');
+    host.prepend(lens);
+  }
+  host.classList.add('lens-host');
+  let cur = null, anim = null, target = null;
+  const rectOf = (el) => ({ x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight });
+  const apply = (r, stretch = 0) => {
+    const along = 1 + stretch, across = 1 - stretch * 0.4;
+    const sx = axis === 'x' ? along : across, sy = axis === 'x' ? across : along;
+    lens.style.width = `${r.w}px`;
+    lens.style.height = `${r.h}px`;
+    lens.style.transform = `translate(${r.x}px, ${r.y}px) scale(${sx.toFixed(4)}, ${sy.toFixed(4)})`;
+  };
+  const show = () => { lens.classList.add('ready'); host.classList.add('has-lens'); };
+  const api = {
+    host,
+    moveTo(el, animate = true) {
+      if (!el) return;
+      target = el;
+      const to = rectOf(el);
+      if (!to.w) return;   /* not laid out yet; sync() will place it */
+      if (!cur || !animate || reduceMotion()) {
+        if (anim) { anim.stop(); anim = null; }
+        cur = to; apply(to); show();
+        return;
+      }
+      const from = Object.assign({}, cur);
+      const dist = Math.hypot(to.x - from.x, to.y - from.y);
+      if (anim) anim.stop();
+      show();
+      anim = Motion.spring({
+        from: 0, to: 1, damping: 0.72, response: 0.42, restDelta: 0.001, restSpeed: 0.01,
+        onUpdate: (p, v) => {
+          cur = { x: from.x + (to.x - from.x) * p, y: from.y + (to.y - from.y) * p, w: from.w + (to.w - from.w) * p, h: from.h + (to.h - from.h) * p };
+          apply(cur, Math.min(0.24, Math.abs(v) * dist / 7000));
+        },
+        onComplete: () => { anim = null; apply(cur, 0); }
+      });
+    },
+    /** Re-measure without animating (resize, late layout, fonts loading). */
+    sync() {
+      if (!target || !target.isConnected || anim) return;
+      const r = rectOf(target);
+      if (!r.w) return;
+      cur = r; apply(r); show();
+    }
+  };
+  Lenses.add(api);
+  if (lensObserver) lensObserver.observe(host);
+  return api;
+}
+
+/** Glass responds to touch: it swells and lights up from the point of contact. */
+function bindGlassPress() {
+  document.addEventListener('pointerdown', (e) => {
+    const el = e.target.closest && e.target.closest('.glass-press');
+    if (!el || el.disabled || e.button > 0) return;
+    const r = el.getBoundingClientRect();
+    el.style.setProperty('--gx', `${e.clientX - r.left}px`);
+    el.style.setProperty('--gy', `${e.clientY - r.top}px`);
+    el.classList.add('pressed');
+    const release = () => {
+      el.classList.remove('pressed');
+      window.removeEventListener('pointerup', release, true);
+      window.removeEventListener('pointercancel', release, true);
+    };
+    window.addEventListener('pointerup', release, true);
+    window.addEventListener('pointercancel', release, true);
+  }, { passive: true });
+}
+
+
+
 /* ---- Toast: brief confirmation, optional action (e.g. Undo) ---- */
 const Toasts = { current: null, timer: 0 };
 function toast(message, { action, onAction, duration = 2600, kind = 'ok' } = {}) {
   const region = $('#toast-region');
   if (!region) return;
   dismissToast(true);
-  const el = h(`<div class="toast ${kind === 'error' ? 'error' : ''}">
+  const el = h(`<div class="toast glass ${kind === 'error' ? 'error' : ''}">
     <span class="t-icon">${kind === 'error' ? ICONS.alert : ICONS.check}</span>
     <span class="t-msg">${esc(message)}</span>
     ${action ? `<button class="btn btn-small btn-primary" type="button">${esc(action)}</button>` : ''}
@@ -1945,19 +2304,22 @@ function segHTML(name, options, current, label) {
 function bindSeg(root, name, onChange) {
   const seg = $(`[data-seg="${name}"]`, root);
   if (!seg) return;
+  const lens = Lens(seg, { axis: 'x' });
+  lens.moveTo($('button[aria-pressed="true"]', seg), false);
   seg.addEventListener('click', (e) => {
     const b = e.target.closest('button');
     if (!b || b.getAttribute('aria-pressed') === 'true') return;
     $$('button', seg).forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    lens.moveTo(b);
     onChange(b.dataset.v);
   });
 }
 /** Horizontal scrolling row with arrow buttons on pointer devices. */
 function rowHTML(id, inner, label) {
   return `<div class="row-wrap full-bleed-row">
-    <div class="row-nav prev"><button class="icon-btn" type="button" data-row-scroll="-1" aria-label="Scroll ${esc(label)} left">${ICONS.chevronLeft}</button></div>
+    <div class="row-nav prev"><button class="icon-btn glass glass-press" type="button" data-row-scroll="-1" aria-label="Scroll ${esc(label)} left">${ICONS.chevronLeft}</button></div>
     <div class="row" id="${esc(id)}" aria-label="${esc(label)}">${inner}</div>
-    <div class="row-nav next"><button class="icon-btn" type="button" data-row-scroll="1" aria-label="Scroll ${esc(label)} right">${ICONS.chevronRight}</button></div>
+    <div class="row-nav next"><button class="icon-btn glass glass-press" type="button" data-row-scroll="1" aria-label="Scroll ${esc(label)} right">${ICONS.chevronRight}</button></div>
   </div>`;
 }
 function bindRows(root) {
@@ -2043,6 +2405,7 @@ function openLogSheet(meta, onDone) {
   const k = keyOf(meta.media_type, meta.tmdb_id);
   const existing = DB.log(k);
   const wasInWatchlist = DB.inWatchlist(k);
+  const wasOnWall = !!(existing && existing.rating != null);
   let liked = DB.isLiked(k);
   const body = h(`<form class="log-form" novalidate>
     <div class="sheet-summary">
@@ -2126,7 +2489,12 @@ function openLogSheet(meta, onDone) {
     const removedWl = rm && rm.checked;
     if (removedWl) DB.setWatchlist(meta, false);
     sheet.close();
-    toast(existing ? 'Log updated' : removedWl ? 'Logged and removed from watchlist' : 'Logged');
+    if (star.value != null && !wasOnWall) {
+      /* First rating: the poster goes up on the wall */
+      toast(existing ? 'Added to your wall' : 'Logged and added to your wall', { action: 'View wall', onAction: () => Nav.go('#/wall') });
+    } else {
+      toast(existing ? 'Log updated' : removedWl ? 'Logged and removed from watchlist' : 'Logged');
+    }
     if (onDone) onDone();
   });
   const del = $('.delete-log', form);
@@ -2324,7 +2692,7 @@ function openFavouritesSheet(onDone) {
           const m = new DOMMatrixReadOnly(getComputedStyle(el).transform === 'none' ? undefined : getComputedStyle(el).transform);
           if (reduceMotion()) { el.style.transform = ''; return; }
           let fx = m.m41, fy = m.m42, sc = m.a;
-          Motion.spring({ from: 1, to: 0, damping: 0.85, response: 0.32, onUpdate: (p) => {
+          Motion.spring({ from: 1, to: 0, damping: 0.85, response: 0.32, restDelta: 0.001, restSpeed: 0.01, onUpdate: (p) => {
             el.style.transform = p === 0 ? '' : `translate(${fx * p}px, ${fy * p}px) scale(${1 + (sc - 1) * p})`;
           } });
         };
@@ -2817,7 +3185,7 @@ async function viewTitle(ctx) {
         <ul class="facts">${facts.map((f) => `<li>${f}</li>`).join('')}</ul>
       </div>
     </div>
-    ${(d.genres || []).length ? `<div class="chips">${d.genres.map((g) => `<a class="chip pressable" href="#/browse?type=${type}&genre=${Number(g.id)}">${esc(genreName(g.id, type) || g.name)}</a>`).join('')}</div>` : ''}
+    ${(d.genres || []).length ? `<div class="chips">${d.genres.map((g) => `<a class="chip glass glass-press" href="#/browse?type=${type}&genre=${Number(g.id)}">${esc(genreName(g.id, type) || g.name)}</a>`).join('')}</div>` : ''}
     <div class="actions" data-actions></div>
     </div>
   </div>
@@ -2851,9 +3219,9 @@ async function viewTitle(ctx) {
     const log = DB.log(k), liked = DB.isLiked(k), wl = DB.inWatchlist(k);
     const actions = $('[data-actions]', ctx.root);
     actions.innerHTML = `
-      <button class="btn btn-primary" type="button" data-log>${log ? ICONS.edit : ICONS.plus}<span>${log ? 'Edit log' : 'Log, rate or review'}</span></button>
-      <button class="btn toggle-like" type="button" aria-pressed="${liked}" data-like>${liked ? ICONS.heartFill : ICONS.heart}<span>${liked ? 'Liked' : 'Like'}</span></button>
-      <button class="btn toggle-watch" type="button" aria-pressed="${wl}" data-wl>${wl ? ICONS.bookmarkFill : ICONS.bookmark}<span>${wl ? 'In watchlist' : 'Watchlist'}</span></button>`;
+      <button class="btn btn-primary glass glass-press" type="button" data-log>${log ? ICONS.edit : ICONS.plus}<span>${log ? 'Edit log' : 'Log, rate or review'}</span></button>
+      <button class="btn glass glass-press toggle-like" type="button" aria-pressed="${liked}" data-like>${liked ? ICONS.heartFill : ICONS.heart}<span>${liked ? 'Liked' : 'Like'}</span></button>
+      <button class="btn glass glass-press toggle-watch" type="button" aria-pressed="${wl}" data-wl>${wl ? ICONS.bookmarkFill : ICONS.bookmark}<span>${wl ? 'In watchlist' : 'Watchlist'}</span></button>`;
     $('[data-log]', actions).addEventListener('click', () => openLogSheet(meta, renderMine));
     $('[data-like]', actions).addEventListener('click', () => {
       const on = !DB.isLiked(k);
@@ -2882,6 +3250,113 @@ async function viewTitle(ctx) {
     $('[data-edit]', mine).addEventListener('click', () => openLogSheet(meta, renderMine));
   };
   renderMine();
+}
+
+/* ---- Wall: every rated title as a poster, in the order they were rated ---- */
+const WALL_SIZES = { s: 'Small', m: 'Medium', l: 'Large' };
+function wallPrefs() {
+  let p = {};
+  try { p = JSON.parse(Store.get(CONFIG.KEYS.wallPrefs, '{}')) || {}; } catch (e) { p = {}; }
+  return {
+    order: p.order === 'oldest' ? 'oldest' : 'newest',
+    size: WALL_SIZES[p.size] ? p.size : 'm',
+    type: p.type === 'movie' || p.type === 'tv' ? p.type : 'all'
+  };
+}
+function wallEntries() { return DB.entries(DB.data.logs).filter((e) => e.log && e.log.rating != null); }
+/** A small, stable tilt per title, so a poster pins up the same way each time. */
+function tiltFor(key) {
+  let n = 0;
+  for (let i = 0; i < key.length; i++) n = (n * 31 + key.charCodeAt(i)) % 997;
+  return ((n % 11) - 5) * 0.8;
+}
+function viewWall(ctx) {
+  const prefs = wallPrefs();
+  const all = wallEntries();
+  const seenAt = DB.data.meta.wallSeenAt || 0;
+  if (!all.length) {
+    ctx.root.innerHTML = `<div class="page">${pageHead('Wall')}
+      ${stateHTML({ icon: 'wall', title: 'Your wall is empty', body: 'Every time you rate a film or show, its poster goes up here. Rate something to pin your first poster.', actions: '<a class="btn btn-primary" href="#/search">Find something to rate</a><a class="btn" href="#/home">See what\u2019s trending</a>' })}</div>`;
+    return;
+  }
+  const avg = all.reduce((sum, e) => sum + e.log.rating, 0) / all.length;
+  const newCount = all.filter((e) => e.log.rated_at > seenAt).length;
+  ctx.root.innerHTML = `<div class="page">
+    ${pageHead('Wall', { lede: `${esc(plural(all.length, 'poster'))}, average <span class="rating-star">\u2605</span> ${esc(fmtRating(Math.round(avg * 10) / 10))}${newCount ? `. ${esc(plural(newCount, 'new poster'))} since your last visit.` : ''}` })}
+    <div class="wall-toolbar glass" role="toolbar" aria-label="Wall options">
+      ${segHTML('wtype', [['all', 'All'], ['movie', 'Films'], ['tv', 'TV']], prefs.type, 'Show')}
+      <button class="icon-btn glass-press" type="button" data-order></button>
+      <button class="icon-btn glass-press" type="button" data-size aria-haspopup="menu" aria-expanded="false">${ICONS.browse}</button>
+    </div>
+    <div class="wall" data-wall data-size="${prefs.size}"></div>
+  </div>`;
+  const wallEl = $('[data-wall]', ctx.root), orderBtn = $('[data-order]', ctx.root), sizeBtn = $('[data-size]', ctx.root);
+  const savePrefs = () => Store.set(CONFIG.KEYS.wallPrefs, JSON.stringify(prefs));
+
+  /* New posters pin up when they first come into view, not off-screen. */
+  let pinIO = null;
+  if ('IntersectionObserver' in window) {
+    pinIO = new IntersectionObserver((entries) => {
+      let i = 0;
+      entries.forEach((en) => {
+        if (!en.isIntersecting) return;
+        const el = en.target;
+        pinIO.unobserve(el);
+        el.style.setProperty('--d', `${Math.min(i++, 10) * 70}ms`);
+        el.classList.remove('await-pin');
+        el.classList.add('pin');
+      });
+    }, { threshold: 0.35 });
+    ctx.onLeave(() => pinIO.disconnect());
+  }
+
+  const drawControls = () => {
+    const newest = prefs.order === 'newest';
+    orderBtn.innerHTML = newest ? ICONS.arrowDown : ICONS.arrowUp;
+    orderBtn.setAttribute('aria-label', newest ? 'Order: newest first. Switch to oldest first' : 'Order: oldest first. Switch to newest first');
+    orderBtn.title = newest ? 'Newest first' : 'Oldest first';
+    sizeBtn.setAttribute('aria-label', `Poster size: ${WALL_SIZES[prefs.size]}`);
+    sizeBtn.title = `Poster size: ${WALL_SIZES[prefs.size]}`;
+  };
+  const draw = (firstPaint) => {
+    const list = all
+      .filter((e) => prefs.type === 'all' || e.t.media_type === prefs.type)
+      .sort((a, b) => prefs.order === 'newest' ? b.log.rated_at - a.log.rated_at : a.log.rated_at - b.log.rated_at);
+    if (!list.length) {
+      wallEl.innerHTML = `<div style="grid-column:1/-1">${stateHTML({ icon: prefs.type === 'tv' ? 'tv' : 'film', title: `No ${prefs.type === 'tv' ? 'TV shows' : 'films'} on your wall yet`, body: 'Switch to All to see everything you\u2019ve rated.', compact: true })}</div>`;
+      return;
+    }
+    wallEl.innerHTML = list.map((e) => {
+      const isNew = e.log.rated_at > seenAt;
+      const liked = DB.isLiked(e.key);
+      const label = `${e.t.title}${e.t.year ? ` (${e.t.year})` : ''}, ${e.t.media_type === 'tv' ? 'TV show' : 'film'}, rated ${fmtRating(e.log.rating)} out of 10${liked ? ', liked' : ''}${isNew ? ', new' : ''}`;
+      return `<a class="wall-tile ${isNew && firstPaint ? 'await-pin' : ''}" href="${titleHref(e.t.media_type, e.t.tmdb_id)}" aria-label="${esc(label)}" style="--rot:${tiltFor(e.key)}deg">
+        ${posterBox(e.t)}
+        <span class="badge wall-chip" aria-hidden="true"><span class="b-star">\u2605</span>${esc(fmtRating(e.log.rating))}${liked ? `<span class="liked-mark">${ICONS.heartFill}</span>` : ''}</span>
+        ${isNew ? '<span class="badge new-chip" aria-hidden="true">New</span>' : ''}
+      </a>`;
+    }).join('');
+    if (firstPaint) {
+      const waiting = $$('.await-pin', wallEl);
+      if (pinIO) waiting.forEach((el) => pinIO.observe(el));
+      else waiting.forEach((el) => { el.classList.remove('await-pin'); el.classList.add('pin'); });
+    }
+  };
+  drawControls();
+  draw(true);
+  /* Everything currently on the wall has now been seen */
+  if (newCount) { DB.data.meta.wallSeenAt = Date.now(); DB.save(); }
+
+  bindSeg(ctx.root, 'wtype', (v) => { prefs.type = v; savePrefs(); draw(false); });
+  orderBtn.addEventListener('click', () => {
+    prefs.order = prefs.order === 'newest' ? 'oldest' : 'newest';
+    savePrefs(); drawControls(); draw(false);
+    toast(prefs.order === 'newest' ? 'Newest first' : 'Oldest first', { duration: 1400 });
+  });
+  sizeBtn.addEventListener('click', (e) => openMenu(e.currentTarget, Object.entries(WALL_SIZES).map(([v, l]) => ({ value: v, label: `${l} posters`, checked: v === prefs.size })), (v) => {
+    prefs.size = v; savePrefs(); drawControls();
+    wallEl.dataset.size = v;
+  }, { label: 'Poster size' }));
 }
 
 /* ---- Watchlist ---- */
@@ -3062,8 +3537,8 @@ function viewProfile(ctx) {
         : '<p class="subhead secondary">Nothing yet. Your logs and reviews will appear here.</p>'}
     </section>
 
-    <div class="tabs-bar material full-bleed-row" style="padding-left:var(--pad);padding-right:var(--pad)">
-      <div class="seg" role="tablist" aria-label="Your titles">${Object.entries(PROFILE_TABS).map(([k, l]) => `<button type="button" role="tab" aria-selected="${k === tab}" data-tab="${k}">${esc(l)}</button>`).join('')}</div>
+    <div class="tabs-bar">
+      <div class="seg glass" role="tablist" aria-label="Your titles" style="--g-bg: var(--glass-thick)">${Object.entries(PROFILE_TABS).map(([k, l]) => `<button type="button" role="tab" aria-selected="${k === tab}" data-tab="${k}">${esc(l)}</button>`).join('')}</div>
     </div>
     <div data-tabpanel role="tabpanel" style="margin-top:1rem"></div>
   </div>`;
@@ -3071,8 +3546,11 @@ function viewProfile(ctx) {
   $('[data-edit-profile]', ctx.root).addEventListener('click', () => openProfileSheet(() => Router.refresh()));
   $$('[data-edit-favs]', ctx.root).forEach((b) => b.addEventListener('click', () => openFavouritesSheet(() => Router.refresh())));
   const tabs = $$('[data-tab]', ctx.root);
+  const tabLens = Lens(tabs[0].parentElement, { axis: 'x' });
+  tabLens.moveTo(tabs.find((t) => t.getAttribute('aria-selected') === 'true'), false);
   tabs.forEach((b) => {
     b.addEventListener('click', () => {
+      tabLens.moveTo(b);
       Router.replace(`#/profile/${b.dataset.tab}`);
       tabs.forEach((x) => x.setAttribute('aria-selected', String(x === b)));
       drawTab(b.dataset.tab);
@@ -3281,6 +3759,7 @@ const ROUTES = [
   { re: /^\/setup$/, view: viewSetup, nav: null, title: 'Set up', noKey: true },
   { re: /^\/home$/, view: viewHome, nav: 'home', title: 'Home', root: true },
   { re: /^\/search$/, view: viewSearch, nav: 'search', title: 'Search', root: true },
+  { re: /^\/wall$/, view: viewWall, nav: 'wall', title: 'Wall', root: true },
   { re: /^\/browse$/, view: viewBrowse, nav: 'browse', title: 'Browse', parent: '#/home' },
   { re: /^\/lists$/, view: viewLists, nav: 'lists', title: 'Top lists', parent: '#/home' },
   { re: /^\/list\/([a-z0-9-]+)$/, view: viewList, nav: 'lists', title: 'List', parent: '#/lists' },
@@ -3292,6 +3771,9 @@ const ROUTES = [
 ];
 /* On phones, sections without their own tab highlight the closest tab. */
 const TAB_FOR = { browse: 'home', lists: 'home', reviews: 'profile', settings: 'profile' };
+
+/* Persistent chrome lenses (tab bar, sidebar), created at boot */
+const Chrome = { tabLens: null, sideLens: null };
 
 const Router = {
   ctx: null,
@@ -3328,6 +3810,9 @@ const Router = {
       else if (this.stack[this.stack.length - 1] !== hash) this.stack.push(hash);
     }
     this.current = hash;
+
+    /* Forget lenses whose controls have left the page */
+    Lenses.forEach((l) => { if (!l.host.isConnected) { Lenses.delete(l); if (lensObserver) lensObserver.unobserve(l.host); } });
 
     /* Tear down the previous view */
     if (this.ctx) { this.ctx.alive = false; this.ctx.cleanups.forEach((fn) => { try { fn(); } catch (e) { console.warn(e); } }); }
@@ -3369,6 +3854,13 @@ const Router = {
       const active = inTabbar ? (TAB_FOR[nav] || nav) : nav;
       if (a.dataset.nav === active) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
+    /* Slide the glass lens to the current section. On detail pages (no
+       section of their own) it stays on the section you came from. */
+    const animate = !this.first;
+    const tab = $('.tabbar [aria-current="page"]');
+    if (tab && Chrome.tabLens) Chrome.tabLens.moveTo(tab, animate);
+    const side = $('.sidebar [aria-current="page"]');
+    if (side && Chrome.sideLens) Chrome.sideLens.moveTo(side, animate);
     const back = $('#back-btn');
     const showBack = route && !route.root && !route.noKey;
     back.hidden = !showBack;
@@ -3404,6 +3896,10 @@ function boot() {
   Nav.interceptLinks();
   hydrateIcons();
   handleImageErrors();
+  bindGlassPress();
+  Chrome.tabLens = Lens($('.tabbar'), { axis: 'x' });
+  Chrome.sideLens = Lens($('.sidebar'), { axis: 'y' });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => Lenses.forEach((l) => l.sync()));
   Theme.apply(false);
   const darkQuery = matchMedia('(prefers-color-scheme: dark)');
   const onSystemTheme = () => { if (Theme.pref() === 'system') Theme.apply(true); };
