@@ -10,12 +10,14 @@
 <title>Wall</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231d1d1f'/%3E%3Crect x='12' y='14' width='11' height='16' rx='2.5' fill='%23fff'/%3E%3Crect x='26.5' y='14' width='11' height='16' rx='2.5' fill='%23fff' opacity='.7'/%3E%3Crect x='41' y='14' width='11' height='16' rx='2.5' fill='%23fff' opacity='.45'/%3E%3Crect x='12' y='34' width='11' height='16' rx='2.5' fill='%23fff' opacity='.45'/%3E%3Crect x='26.5' y='34' width='11' height='16' rx='2.5' fill='%23fff'/%3E%3Crect x='41' y='34' width='11' height='16' rx='2.5' fill='%23fff' opacity='.7'/%3E%3C/svg%3E">
 <script>
-  /* Apply the saved theme before first paint so there is no flash. */
+  /* Apply the saved theme and sidebar state before first paint so nothing flashes. */
   (function () {
     try {
       var t = localStorage.getItem('wall.theme');
       if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
-    } catch (e) { /* storage blocked: fall back to system theme */ }
+      /* Restore a collapsed sidebar before paint, so it doesn't jump */
+      if (localStorage.getItem('wall.sidebar') === 'collapsed') document.documentElement.classList.add('side-collapsed');
+    } catch (e) { /* storage blocked: fall back to defaults */ }
   })();
 </script>
 <style>
@@ -26,7 +28,7 @@
    ========================================================================= */
 :root {
   --font: -apple-system, BlinkMacSystemFont, system-ui, "SF Pro Text", "SF Pro", "Helvetica Neue", "Segoe UI", Roboto, sans-serif;
-  --sidebar-w: 16.25rem;
+  --sidebar-w: 15rem;
   --tabbar-h: 3.875rem;
   --topbar-h: 2.75rem;
   --pad: 1rem;
@@ -375,29 +377,48 @@ html.setup-mode .main { margin-left: 0 !important; padding-bottom: 0; }
 
 @media (min-width: 60rem) {
   :root { --pad: 2rem; }
-  /* Desktop sidebar: a floating panel of thick glass (structural, so heavier) */
+  /* Desktop sidebar: mounted to the left edge, full height. A structural
+     region, so it uses a solid grouped background with a hairline edge. */
   .sidebar {
     display: flex; flex-direction: column; gap: .125rem;
-    position: fixed; top: .75rem; bottom: .75rem; left: .75rem; width: calc(var(--sidebar-w) - 1.25rem); z-index: 31;
-    padding: calc(var(--safe-t) + 1.125rem) .625rem .875rem;
-    border-radius: 1.5rem;
-    --g-bg: var(--glass-thick); --g-blur: 34px;
+    position: fixed; top: 0; bottom: 0; left: 0; width: var(--sidebar-w); z-index: 31;
+    padding: calc(var(--safe-t) + .875rem) .625rem .875rem;
+    background: var(--bg-grouped);
+    box-shadow: inset -.5px 0 0 var(--separator);
+    overflow-x: hidden; overflow-y: auto; scrollbar-width: none;
   }
-  .sidebar .lens { border-radius: .75rem; }
-  .brand { display: flex; align-items: center; gap: .625rem; padding: 0 .625rem 1.25rem; font-size: 1.375rem; font-weight: 700; letter-spacing: -.02em; color: var(--label); text-decoration: none !important; }
-  .brand svg { width: 1.75rem; height: 1.75rem; }
+  .sidebar .lens { border-radius: .625rem; background: var(--lens); }
+  .side-top { display: flex; align-items: center; justify-content: space-between; gap: .25rem; padding: 0 0 1rem; min-height: 2.75rem; }
+  .brand { display: flex; align-items: center; gap: .625rem; padding: 0 .375rem 0 .5rem; font-size: 1.375rem; font-weight: 700; letter-spacing: -.02em; color: var(--label); text-decoration: none !important; min-width: 0; }
+  .brand svg { width: 1.75rem; height: 1.75rem; flex: none; }
+  .side-toggle { color: var(--label-2); flex: none; }
+  .side-toggle:hover { color: var(--label); }
   .side-link {
-    display: flex; align-items: center; gap: .75rem; padding: .5rem .625rem; border-radius: .75rem;
-    color: var(--label); font-size: .9375rem; font-weight: 500; text-decoration: none !important;
-    transition: background-color .15s, transform 100ms ease-out;
+    display: flex; align-items: center; gap: .75rem; padding: .5rem .625rem; border-radius: .625rem;
+    color: var(--label); font-size: .9375rem; font-weight: 500; text-decoration: none !important; white-space: nowrap;
+    transition: background-color .15s, transform 100ms ease-out, padding .3s var(--spring-soft), gap .3s var(--spring-soft);
   }
   .side-link svg { width: 1.25rem; height: 1.25rem; color: var(--accent); flex: none; }
   .side-link:hover { background: var(--fill); }
   .side-link:active { transform: scale(.98); }
   .side-link[aria-current="page"] { font-weight: 600; }
   .sidebar:not(.has-lens) .side-link[aria-current="page"] { background: var(--lens); }
+  .sidebar .label { transition: opacity .2s ease; overflow: hidden; }
   .side-sep { height: 1rem; }
-  .side-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; padding: 0 .25rem 0 .625rem; }
+  .side-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; padding: 0 .125rem 0 .625rem; white-space: nowrap; }
+
+  /* Collapsed: a narrow rail of icons. Labels stay in the accessibility tree
+     (they're clipped, not removed), so every link keeps its name. */
+  html.side-collapsed { --sidebar-w: 4.5rem; }
+  html.side-collapsed .sidebar .label { opacity: 0; width: 0; flex: 0 0 0; }
+  html.side-collapsed .side-top { flex-direction: column; justify-content: flex-start; gap: .375rem; }
+  html.side-collapsed .brand { padding: 0; gap: 0; }
+  html.side-collapsed .side-link { justify-content: center; gap: 0; padding: .625rem 0; }
+  html.side-collapsed .side-foot { justify-content: center; padding: 0; }
+  /* Animate only when the person toggles it, never on page load */
+  html.side-anim .sidebar { transition: width .42s var(--spring-soft); }
+  html.side-anim .main { transition: margin-left .42s var(--spring-soft); }
+  html.side-anim .toast-region { transition: left .42s var(--spring-soft); }
   .main { margin-left: var(--sidebar-w); padding-bottom: 2rem; }
   .tabbar, .tabbar-edge { display: none; }
   .topbar .theme-toggle { display: none; }
@@ -882,63 +903,155 @@ html.setup-mode .main { margin-left: 0 !important; padding-bottom: 0; }
 html.setup-mode .site-footer { display: none; }
 
 /* =========================================================================
-   WALL: every rated title, pinned up as a poster
-   A real poster wall: big posters, butted together with no gaps or rounded
-   corners, running edge to edge across the screen. Few posters per row.
+   WALL: a brick wall covered in graffiti, with every rated title
+   wheatpasted onto it as a poster. All graffiti is drawn in code.
    ========================================================================= */
-.wall-toolbar {
-  position: sticky; top: calc(var(--topbar-h) + var(--safe-t) + .5rem); z-index: 6;
-  display: flex; align-items: center; gap: .375rem; width: fit-content; max-width: 100%;
-  margin: 0 auto 1rem; padding: .3125rem; border-radius: 999px;
-  --g-bg: var(--glass-thick); --g-blur: 20px;
+:root {
+  --brick: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22320%22%20height%3D%22160%22%20viewBox%3D%220%200%20320%20160%22%3E%3Cdefs%3E%3Cfilter%20id%3D%22n%22%20x%3D%220%22%20y%3D%220%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3CfeTurbulence%20type%3D%22fractalNoise%22%20baseFrequency%3D%22.9%22%20numOctaves%3D%222%22%20seed%3D%223%22%2F%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%20%200%200%200%200%200%20%200%200%200%200%200%20%200%200%200%20.55%200%22%2F%3E%3C%2Ffilter%3E%3Cfilter%20id%3D%22s%22%20x%3D%220%22%20y%3D%220%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3CfeTurbulence%20type%3D%22fractalNoise%22%20baseFrequency%3D%22.035%22%20numOctaves%3D%223%22%20seed%3D%229%22%2F%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%20%200%200%200%200%200%20%200%200%200%200%200%20%200%200%200%20.5%20-.12%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Crect%20width%3D%22320%22%20height%3D%22160%22%20fill%3D%22%23b9ada2%22%2F%3E%3Crect%20x%3D%222.0%22%20y%3D%222.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23aa5048%22%2F%3E%3Crect%20x%3D%2282.0%22%20y%3D%222.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23994e4d%22%2F%3E%3Crect%20x%3D%22162.0%22%20y%3D%222.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%239c574e%22%2F%3E%3Crect%20x%3D%22242.0%22%20y%3D%222.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23995c42%22%2F%3E%3Crect%20x%3D%22-38.0%22%20y%3D%2242.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23984e49%22%2F%3E%3Crect%20x%3D%22282.0%22%20y%3D%2242.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23984e49%22%2F%3E%3Crect%20x%3D%2242.0%22%20y%3D%2242.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23b04e43%22%2F%3E%3Crect%20x%3D%22122.0%22%20y%3D%2242.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%239b5d49%22%2F%3E%3Crect%20x%3D%22202.0%22%20y%3D%2242.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23995e3f%22%2F%3E%3Crect%20x%3D%22282.0%22%20y%3D%2242.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23a4604e%22%2F%3E%3Crect%20x%3D%22-38.0%22%20y%3D%2242.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23a4604e%22%2F%3E%3Crect%20x%3D%222.0%22%20y%3D%2282.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23995e4e%22%2F%3E%3Crect%20x%3D%2282.0%22%20y%3D%2282.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23af4d43%22%2F%3E%3Crect%20x%3D%22162.0%22%20y%3D%2282.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23985d40%22%2F%3E%3Crect%20x%3D%22242.0%22%20y%3D%2282.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23a85940%22%2F%3E%3Crect%20x%3D%22-38.0%22%20y%3D%22122.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%239d5e45%22%2F%3E%3Crect%20x%3D%22282.0%22%20y%3D%22122.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%239d5e45%22%2F%3E%3Crect%20x%3D%2242.0%22%20y%3D%22122.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23a14f4e%22%2F%3E%3Crect%20x%3D%22122.0%22%20y%3D%22122.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23a2573f%22%2F%3E%3Crect%20x%3D%22202.0%22%20y%3D%22122.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%239a5e3d%22%2F%3E%3Crect%20x%3D%22282.0%22%20y%3D%22122.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23a35b4d%22%2F%3E%3Crect%20x%3D%22-38.0%22%20y%3D%22122.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23a35b4d%22%2F%3E%3Crect%20width%3D%22320%22%20height%3D%22160%22%20filter%3D%22url%28%23s%29%22%2F%3E%3Crect%20width%3D%22320%22%20height%3D%22160%22%20filter%3D%22url%28%23n%29%22%20opacity%3D%220.28%22%2F%3E%3C%2Fsvg%3E");
+  --mortar: #b9ada2;
+  --wall-ink: #fff;
 }
-.wall-toolbar .seg { background: transparent; padding: 0; }
-.wall-toolbar .icon-btn { width: 2.25rem; height: 2.25rem; color: var(--label); }
-.wall-toolbar .icon-btn:hover { background: var(--fill); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --brick: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22320%22%20height%3D%22160%22%20viewBox%3D%220%200%20320%20160%22%3E%3Cdefs%3E%3Cfilter%20id%3D%22n%22%20x%3D%220%22%20y%3D%220%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3CfeTurbulence%20type%3D%22fractalNoise%22%20baseFrequency%3D%22.9%22%20numOctaves%3D%222%22%20seed%3D%223%22%2F%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%20%200%200%200%200%200%20%200%200%200%200%200%20%200%200%200%20.55%200%22%2F%3E%3C%2Ffilter%3E%3Cfilter%20id%3D%22s%22%20x%3D%220%22%20y%3D%220%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3CfeTurbulence%20type%3D%22fractalNoise%22%20baseFrequency%3D%22.035%22%20numOctaves%3D%223%22%20seed%3D%229%22%2F%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%20%200%200%200%200%200%20%200%200%200%200%200%20%200%200%200%20.5%20-.12%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Crect%20width%3D%22320%22%20height%3D%22160%22%20fill%3D%22%232a2320%22%2F%3E%3Crect%20x%3D%222.0%22%20y%3D%222.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23442424%22%2F%3E%3Crect%20x%3D%2282.0%22%20y%3D%222.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%234e221f%22%2F%3E%3Crect%20x%3D%22162.0%22%20y%3D%222.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23542a1f%22%2F%3E%3Crect%20x%3D%22242.0%22%20y%3D%222.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23452b1e%22%2F%3E%3Crect%20x%3D%22-38.0%22%20y%3D%2242.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%234a251e%22%2F%3E%3Crect%20x%3D%22282.0%22%20y%3D%2242.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%234a251e%22%2F%3E%3Crect%20x%3D%2242.0%22%20y%3D%2242.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%233c2824%22%2F%3E%3Crect%20x%3D%22122.0%22%20y%3D%2242.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%233c251f%22%2F%3E%3Crect%20x%3D%22202.0%22%20y%3D%2242.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%234b281e%22%2F%3E%3Crect%20x%3D%22282.0%22%20y%3D%2242.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23542b1f%22%2F%3E%3Crect%20x%3D%22-38.0%22%20y%3D%2242.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23542b1f%22%2F%3E%3Crect%20x%3D%222.0%22%20y%3D%2282.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23412c28%22%2F%3E%3Crect%20x%3D%2282.0%22%20y%3D%2282.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%234c2227%22%2F%3E%3Crect%20x%3D%22162.0%22%20y%3D%2282.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%234c281e%22%2F%3E%3Crect%20x%3D%22242.0%22%20y%3D%2282.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23412226%22%2F%3E%3Crect%20x%3D%22-38.0%22%20y%3D%22122.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%233e2624%22%2F%3E%3Crect%20x%3D%22282.0%22%20y%3D%22122.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%233e2624%22%2F%3E%3Crect%20x%3D%2242.0%22%20y%3D%22122.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%233e2a1f%22%2F%3E%3Crect%20x%3D%22122.0%22%20y%3D%22122.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%234c2626%22%2F%3E%3Crect%20x%3D%22202.0%22%20y%3D%22122.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23542c20%22%2F%3E%3Crect%20x%3D%22282.0%22%20y%3D%22122.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%233d2b27%22%2F%3E%3Crect%20x%3D%22-38.0%22%20y%3D%22122.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%233d2b27%22%2F%3E%3Crect%20width%3D%22320%22%20height%3D%22160%22%20filter%3D%22url%28%23s%29%22%2F%3E%3Crect%20width%3D%22320%22%20height%3D%22160%22%20filter%3D%22url%28%23n%29%22%20opacity%3D%220.35%22%2F%3E%3C%2Fsvg%3E"); --mortar: #2a2320; } }
+:root[data-theme="dark"] { --brick: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22320%22%20height%3D%22160%22%20viewBox%3D%220%200%20320%20160%22%3E%3Cdefs%3E%3Cfilter%20id%3D%22n%22%20x%3D%220%22%20y%3D%220%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3CfeTurbulence%20type%3D%22fractalNoise%22%20baseFrequency%3D%22.9%22%20numOctaves%3D%222%22%20seed%3D%223%22%2F%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%20%200%200%200%200%200%20%200%200%200%200%200%20%200%200%200%20.55%200%22%2F%3E%3C%2Ffilter%3E%3Cfilter%20id%3D%22s%22%20x%3D%220%22%20y%3D%220%22%20width%3D%22100%25%22%20height%3D%22100%25%22%3E%3CfeTurbulence%20type%3D%22fractalNoise%22%20baseFrequency%3D%22.035%22%20numOctaves%3D%223%22%20seed%3D%229%22%2F%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%20%200%200%200%200%200%20%200%200%200%200%200%20%200%200%200%20.5%20-.12%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Crect%20width%3D%22320%22%20height%3D%22160%22%20fill%3D%22%232a2320%22%2F%3E%3Crect%20x%3D%222.0%22%20y%3D%222.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23442424%22%2F%3E%3Crect%20x%3D%2282.0%22%20y%3D%222.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%234e221f%22%2F%3E%3Crect%20x%3D%22162.0%22%20y%3D%222.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23542a1f%22%2F%3E%3Crect%20x%3D%22242.0%22%20y%3D%222.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23452b1e%22%2F%3E%3Crect%20x%3D%22-38.0%22%20y%3D%2242.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%234a251e%22%2F%3E%3Crect%20x%3D%22282.0%22%20y%3D%2242.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%234a251e%22%2F%3E%3Crect%20x%3D%2242.0%22%20y%3D%2242.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%233c2824%22%2F%3E%3Crect%20x%3D%22122.0%22%20y%3D%2242.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%233c251f%22%2F%3E%3Crect%20x%3D%22202.0%22%20y%3D%2242.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%234b281e%22%2F%3E%3Crect%20x%3D%22282.0%22%20y%3D%2242.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23542b1f%22%2F%3E%3Crect%20x%3D%22-38.0%22%20y%3D%2242.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23542b1f%22%2F%3E%3Crect%20x%3D%222.0%22%20y%3D%2282.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23412c28%22%2F%3E%3Crect%20x%3D%2282.0%22%20y%3D%2282.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%234c2227%22%2F%3E%3Crect%20x%3D%22162.0%22%20y%3D%2282.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%234c281e%22%2F%3E%3Crect%20x%3D%22242.0%22%20y%3D%2282.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23412226%22%2F%3E%3Crect%20x%3D%22-38.0%22%20y%3D%22122.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%233e2624%22%2F%3E%3Crect%20x%3D%22282.0%22%20y%3D%22122.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%233e2624%22%2F%3E%3Crect%20x%3D%2242.0%22%20y%3D%22122.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%233e2a1f%22%2F%3E%3Crect%20x%3D%22122.0%22%20y%3D%22122.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%234c2626%22%2F%3E%3Crect%20x%3D%22202.0%22%20y%3D%22122.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%23542c20%22%2F%3E%3Crect%20x%3D%22282.0%22%20y%3D%22122.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%233d2b27%22%2F%3E%3Crect%20x%3D%22-38.0%22%20y%3D%22122.0%22%20width%3D%2276%22%20height%3D%2236%22%20rx%3D%221.5%22%20fill%3D%22%233d2b27%22%2F%3E%3Crect%20width%3D%22320%22%20height%3D%22160%22%20filter%3D%22url%28%23s%29%22%2F%3E%3Crect%20width%3D%22320%22%20height%3D%22160%22%20filter%3D%22url%28%23n%29%22%20opacity%3D%220.35%22%2F%3E%3C%2Fsvg%3E"); --mortar: #2a2320; }
+
+/* On the Wall tab only: the page itself becomes the wall, and every
+   control that could sit over a poster is hidden or moved off the posters. */
+html.wall-mode .main {
+  background-color: var(--mortar);
+  background-image:
+    linear-gradient(to bottom, rgba(0,0,0,.28), transparent 18%, transparent 78%, rgba(0,0,0,.38)),
+    radial-gradient(60% 40% at 15% 30%, rgba(0,0,0,.18), transparent 70%),
+    radial-gradient(50% 35% at 85% 70%, rgba(0,0,0,.14), transparent 70%),
+    var(--brick);
+  background-size: auto, auto, auto, 320px 160px;
+}
+html.wall-mode .topbar { display: none; }
+html.wall-mode .tabbar-edge { display: none; }
+html.wall-mode .site-footer { color: rgba(255,255,255,.72); text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+html.wall-mode .site-footer a { color: #fff; text-decoration: underline; }
+/* Phone tab bar on the Wall: tucked away while you look at posters,
+   back as soon as you scroll up (or tab to it with a keyboard). */
+.tabbar { transition: transform .5s var(--spring-soft), opacity .3s ease; }
+html.wall-mode .tabbar.tab-hidden { transform: translateY(calc(100% + var(--safe-b) + 1.5rem)); opacity: 0; pointer-events: none; }
+
+.wall-page { padding: 0; max-width: none; }
+
+/* ---- The graffiti-covered stretch of wall above the posters ---- */
+.wall-hero {
+  position: relative; overflow: hidden;
+  min-height: clamp(19rem, 52svh, 30rem);
+  padding: calc(var(--safe-t) + 2.25rem) var(--pad) 1.75rem;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: .875rem;
+  color: var(--wall-ink); text-align: center;
+}
+.wall-hero .g-piece { width: min(34rem, 94%); height: auto; overflow: visible; position: relative; z-index: 2; }
+.wall-count {
+  position: relative; z-index: 2;
+  font-family: "Stardos Stencil", "Arial Black", Impact, sans-serif; font-weight: 700;
+  font-size: 1.125rem; letter-spacing: .14em; text-transform: uppercase;
+  color: #f4efe6; text-shadow: 0 0 6px rgba(255,255,255,.25), 0 2px 3px rgba(0,0,0,.6);
+}
+.wall-hint { position: relative; z-index: 2; font-size: .75rem; color: rgba(255,255,255,.8); text-shadow: 0 1px 2px rgba(0,0,0,.7); }
+@media (hover: hover) { .wall-hint { display: none; } }
+.wall-controls { position: relative; z-index: 3; display: flex; gap: .375rem; padding: .3125rem; border-radius: 999px; --g-bg: var(--glass-thick); --g-blur: 16px; }
+.wall-controls .seg { background: transparent; padding: 0; }
+.wall-controls .icon-btn { width: 2.25rem; height: 2.25rem; color: var(--label); }
+
+/* Scattered graffiti on the brick: positioned by percentages so it scales */
+.g-layer { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.g-el { position: absolute; }
+.g-el svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+/* ---- Slap stickers ---- */
+.sticker { position: absolute; pointer-events: none; box-shadow: 0 2px 4px rgba(0,0,0,.35); font-family: "Permanent Marker", "Marker Felt", "Comic Sans MS", cursive; }
+.sticker::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(125deg, rgba(255,255,255,.35), transparent 40%); }
+.sticker-hello { width: 7.5rem; border-radius: .5rem; background: #d8262f; color: #fff; text-align: center; padding: .25rem .25rem .375rem; font-family: var(--font); }
+.sticker-hello b { display: block; font-size: 1.25rem; font-weight: 900; letter-spacing: .04em; line-height: 1; }
+.sticker-hello small { display: block; font-size: .5625rem; font-weight: 700; margin-bottom: .1875rem; }
+.sticker-hello span { display: block; background: #fff; color: #1a1a1a; border-radius: .1875rem; padding: .3125rem 0; font-family: "Permanent Marker", "Marker Felt", "Comic Sans MS", cursive; font-size: 1.25rem; line-height: 1.1; }
+.sticker-round { width: 4.25rem; height: 4.25rem; border-radius: 50%; background: #ffd21f; color: #111; display: grid; place-items: center; text-align: center; font-size: .6875rem; line-height: 1.05; }
+.sticker-round svg { width: 1.5rem; height: 1.5rem; display: block; margin: 0 auto .125rem; }
+/* Placement that adapts: on phones the sticker sits right, clear of the count */
+.seen-pos { right: 3%; bottom: 16%; width: 3.5rem; height: 3.5rem; font-size: .5625rem; transform: rotate(-12deg); }
+.seen-pos svg { width: 1.125rem; height: 1.125rem; }
+@media (min-width: 40rem) {
+  .seen-pos { right: auto; left: 4%; bottom: 22%; width: 4.25rem; height: 4.25rem; font-size: .6875rem; }
+  .seen-pos svg { width: 1.5rem; height: 1.5rem; }
+}
+.g-wide { display: none; }
+@media (min-width: 40rem) { .g-wide { display: block; } }
+.sticker-bar { padding: .3125rem .625rem; background: #111; color: #fff; font-family: "Stardos Stencil", "Arial Black", Impact, sans-serif; font-weight: 700; font-size: .875rem; letter-spacing: .1em; border-radius: .125rem; }
+
+/* ---- Posters, wheatpasted edge to edge ---- */
 .wall {
   --cols: 2;
+  position: relative;
   display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 0;
-  /* Break out of the page padding so the wall meets both screen edges */
-  margin: 0 calc(-1 * var(--pad));
-  /* The toolbar floats over the wall, so pull the posters up beneath it */
-  margin-top: -3.5rem;
+  overflow: hidden;   /* posters are slightly askew: keep them inside the wall */
+  padding-bottom: 1px;
 }
 @media (min-width: 40rem) { .wall { --cols: 3; } }
 @media (min-width: 60rem) { .wall { --cols: 4; } }
 @media (min-width: 100rem) { .wall { --cols: 5; } }
-/* On wide screens .page is capped and centred; widen the wall to the full content area */
-@media (min-width: 60rem) {
-  .page.wall-page { max-width: none; }
-  /* Run the wall slightly under the floating glass sidebar's edge rather
-     than stopping short of it, so the panel reads as floating over the wall */
-  .wall-page .wall { margin-left: calc(-1 * var(--pad) - 1.25rem); }
-}
 .wall-tile {
-  position: relative; display: block; aspect-ratio: 2 / 3; overflow: hidden;
-  background: var(--fill); color: inherit; text-decoration: none !important;
+  position: relative; display: block; aspect-ratio: 2 / 3;
+  color: inherit; text-decoration: none !important;
   content-visibility: auto; contain-intrinsic-size: auto 420px;
-  transition: transform var(--spring-soft-dur) var(--spring-soft), box-shadow .3s ease;
 }
-.wall-tile .poster { width: 100%; height: 100%; aspect-ratio: auto; border-radius: 0; }
-.wall-tile .poster::after { display: none; }
-.wall-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
-/* A hairline where two posters meet, like paper edges on a wall */
-.wall-tile::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 .5px rgba(0, 0, 0, .28); pointer-events: none; }
-/* Hover: the poster lifts off the wall slightly */
-@media (hover: hover) {
-  .wall-tile:hover { transform: scale(1.025); z-index: 2; box-shadow: 0 18px 40px -10px rgba(0, 0, 0, .55); }
+/* The pasted sheet: a touch oversized and askew, so it overlaps its
+   neighbours like real posters slapped up over one another */
+.paste {
+  position: absolute; inset: 0;
+  transform: rotate(var(--tilt, 0deg)) scale(1.035);
+  box-shadow: 0 1px 3px rgba(0,0,0,.45), 0 0 0 .5px rgba(0,0,0,.35);
+  background: #d9d2c4;
 }
-.wall-tile:active { transform: scale(.985); transition-duration: .1s; }
-.wall-tile:focus-visible { z-index: 3; outline-offset: -4px; border-radius: 0; }
-.new-chip { position: absolute; right: .5rem; top: .5rem; z-index: 1; font-size: .6875rem; padding: .25rem .5rem; }
-/* Newly rated posters get pinned up: they drop in from slightly above,
+.paste .poster { width: 100%; height: 100%; aspect-ratio: auto; border-radius: 0; background: #2b2b2e; }
+.paste .poster::after { display: none; }
+.paste img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Paper: faint wrinkles and paste sheen over the print */
+.paste::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(calc(90deg + var(--tilt, 0deg) * 20), transparent 30%, rgba(255,255,255,.1) 45%, transparent 52%, rgba(0,0,0,.08) 70%, transparent 80%),
+    linear-gradient(170deg, rgba(255,255,255,.08), transparent 35%, rgba(0,0,0,.14));
+}
+/* Peeling corner: the corner is cut away and a curled flap shows the back of the paper */
+.wall-tile.peel .paste { clip-path: polygon(0 0, 100% 0, 100% calc(100% - 2.25rem), calc(100% - 2.25rem) 100%, 0 100%); }
+.wall-tile.peel .flap {
+  position: absolute; right: 0; bottom: 0; width: 2.25rem; height: 2.25rem; pointer-events: none;
+  transform: rotate(var(--tilt, 0deg)) scale(1.035); transform-origin: -400% -400%;
+  background: linear-gradient(315deg, transparent 50%, #efe8da 50%, #d7cfbf 78%, #c9c0ae);
+  filter: drop-shadow(-2px -2px 2px rgba(0,0,0,.35));
+}
+/* Masking tape on a corner or two */
+.tape {
+  position: absolute; z-index: 2; width: 3.75rem; height: 1.125rem; pointer-events: none;
+  background: rgba(233, 222, 190, .78);
+  box-shadow: 0 1px 1px rgba(0,0,0,.15);
+  clip-path: polygon(2% 10%, 8% 0, 16% 12%, 24% 2%, 32% 10%, 42% 0, 52% 8%, 62% 0, 72% 10%, 82% 1%, 92% 12%, 100% 4%, 98% 90%, 90% 100%, 80% 88%, 70% 100%, 60% 90%, 50% 100%, 40% 88%, 30% 100%, 20% 90%, 10% 100%, 0 92%);
+}
+.tape.tl { left: -.75rem; top: .5rem; transform: rotate(-38deg); }
+.tape.tr { right: -.75rem; top: .5rem; transform: rotate(40deg); }
+.tape.bl { left: -.75rem; bottom: .75rem; transform: rotate(36deg); }
+/* No hover growth; clicking still gives a quick dim so taps feel answered */
+.wall-tile:active .paste { filter: brightness(.88); }
+.wall-tile:focus-visible { z-index: 4; outline: 3px solid #fff; outline-offset: -5px; box-shadow: inset 0 0 0 6px rgba(0,0,0,.5); }
+/* Graffiti sprayed across the posters, over the seams */
+.g-over { position: absolute; z-index: 3; pointer-events: none; }
+.g-over svg { width: 100%; height: auto; display: block; overflow: visible; }
+
+/* The end of the wall: more bare brick and a last tag */
+.wall-end { position: relative; min-height: 13rem; overflow: hidden; }
+
+/* Newly rated posters get pasted up: they drop in from slightly above,
    a little tilted, and settle on a spring. */
 .wall-tile.pin { animation: pin-up var(--spring-dur) var(--spring) both; animation-delay: var(--d, 0ms); z-index: 1; }
 .wall-tile.await-pin { opacity: 0; }
 @keyframes pin-up {
-  0% { opacity: 0; transform: translateY(-26px) scale(1.08) rotate(var(--rot, -3deg)); box-shadow: 0 24px 40px -8px rgba(0,0,0,.5); }
+  0% { opacity: 0; transform: translateY(-26px) scale(1.08) rotate(var(--rot, -3deg)); }
   30% { opacity: 1; }
-  100% { opacity: 1; transform: none; box-shadow: none; }
+  100% { opacity: 1; transform: none; }
 }
 
 /* Shown only when browser storage is blocked; sits in the page flow so it never covers controls */
@@ -964,7 +1077,10 @@ html.setup-mode .storage-note { max-width: 28rem; margin-left: auto; margin-righ
   .row { scroll-behavior: auto; }
   .glass-press, .glass-press.pressed, .btn.glass-press.pressed, .icon-btn.glass-press.pressed { transform: none !important; transition: background-color .2s !important; }
   .wall-tile.pin { animation: pin-fade .3s ease both; animation-delay: 0ms; }
-  .wall-tile:hover { transform: none; }
+  html.wall-mode .tabbar { transition: opacity .2s ease; }
+  html.wall-mode .tabbar.tab-hidden { transform: none; }
+  html.side-anim .sidebar, html.side-anim .main, html.side-anim .toast-region { transition: none; }
+  .side-link { transition: background-color .15s; }
   .trailer .play, .trailer button:hover .play { transform: none; transition: none; }
 }
 @keyframes pin-fade { from { opacity: 0; } to { opacity: 1; } }
@@ -1013,20 +1129,23 @@ html.setup-mode .storage-note { max-width: 28rem; margin-left: auto; margin-righ
 <a class="skip-link" href="#view">Skip to content</a>
 <div class="app">
   <!-- Desktop sidebar (translucent, structural) -->
-  <nav class="sidebar glass glass-thick" aria-label="Main">
-    <a class="brand" href="#/home" aria-label="Wall home"><span data-icon="logo"></span>Wall</a>
-    <a class="side-link" href="#/home" data-nav="home"><span data-icon="home"></span>Home</a>
-    <a class="side-link" href="#/search" data-nav="search"><span data-icon="search"></span>Search</a>
-    <a class="side-link" href="#/wall" data-nav="wall"><span data-icon="wall"></span>Wall</a>
-    <a class="side-link" href="#/browse" data-nav="browse"><span data-icon="browse"></span>Browse</a>
-    <a class="side-link" href="#/lists" data-nav="lists"><span data-icon="trophy"></span>Top lists</a>
+  <nav class="sidebar" id="sidebar" aria-label="Main">
+    <div class="side-top">
+      <a class="brand" href="#/home" aria-label="Wall home"><span data-icon="logo"></span><span class="label">Wall</span></a>
+      <button class="icon-btn side-toggle" type="button" aria-controls="sidebar" aria-expanded="true" aria-label="Collapse sidebar" title="Collapse sidebar"><span data-icon="sidebar"></span></button>
+    </div>
+    <a class="side-link" href="#/home" data-nav="home"><span data-icon="home"></span><span class="label">Home</span></a>
+    <a class="side-link" href="#/search" data-nav="search"><span data-icon="search"></span><span class="label">Search</span></a>
+    <a class="side-link" href="#/wall" data-nav="wall"><span data-icon="wall"></span><span class="label">Wall</span></a>
+    <a class="side-link" href="#/browse" data-nav="browse"><span data-icon="browse"></span><span class="label">Browse</span></a>
+    <a class="side-link" href="#/lists" data-nav="lists"><span data-icon="trophy"></span><span class="label">Top lists</span></a>
     <div class="side-sep" aria-hidden="true"></div>
-    <a class="side-link" href="#/watchlist" data-nav="watchlist"><span data-icon="bookmark"></span>Watchlist</a>
-    <a class="side-link" href="#/reviews" data-nav="reviews"><span data-icon="quote"></span>Reviews</a>
-    <a class="side-link" href="#/profile" data-nav="profile"><span data-icon="person"></span>Profile</a>
-    <a class="side-link" href="#/settings" data-nav="settings"><span data-icon="gear"></span>Settings</a>
+    <a class="side-link" href="#/watchlist" data-nav="watchlist"><span data-icon="bookmark"></span><span class="label">Watchlist</span></a>
+    <a class="side-link" href="#/reviews" data-nav="reviews"><span data-icon="quote"></span><span class="label">Reviews</span></a>
+    <a class="side-link" href="#/profile" data-nav="profile"><span data-icon="person"></span><span class="label">Profile</span></a>
+    <a class="side-link" href="#/settings" data-nav="settings"><span data-icon="gear"></span><span class="label">Settings</span></a>
     <div class="side-foot">
-      <span class="footnote secondary">Appearance</span>
+      <span class="footnote secondary label">Appearance</span>
       <button class="icon-btn theme-toggle" type="button" aria-label="Switch to dark mode"></button>
     </div>
   </nav>
@@ -1087,7 +1206,8 @@ const CONFIG = {
     theme: 'wall.theme',
     persistAsked: 'wall.persistAsked',
     apiHost: 'wall.tmdbHost',
-    wallPrefs: 'wall.wallPrefs'
+    wallPrefs: 'wall.wallPrefs',
+    sidebar: 'wall.sidebar'
   },
   /* TMDB serves the same API from two domains. Some internet providers (Jio and
      Airtel in India, among others) block themoviedb.org, so Wall falls back to
@@ -1247,6 +1367,7 @@ const ICONS = {
   play: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M7 4.8v14.4a1 1 0 001.5.86l11.7-7.2a1 1 0 000-1.72L8.5 3.94A1 1 0 007 4.8z"/></svg>',
   sort: svg('<path d="M7 4v16M3.5 16.5L7 20l3.5-3.5M17 20V4M13.5 7.5L17 4l3.5 3.5"/>'),
   wall: svg('<rect x="3" y="3.5" width="5" height="7.5" rx="1.2"/><rect x="9.5" y="3.5" width="5" height="7.5" rx="1.2"/><rect x="16" y="3.5" width="5" height="7.5" rx="1.2"/><rect x="3" y="13" width="5" height="7.5" rx="1.2"/><rect x="9.5" y="13" width="5" height="7.5" rx="1.2"/><rect x="16" y="13" width="5" height="7.5" rx="1.2"/>'),
+  sidebar: svg('<rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M9.5 4.5v15M5.5 8h1.5M5.5 11h1.5"/>'),
   arrowDown: svg('<path d="M12 4.5v15M6 13.5l6 6 6-6"/>'),
   arrowUp: svg('<path d="M12 19.5v-15M6 10.5l6-6 6 6"/>'),
   edit: svg('<path d="M4 20h4L19 9a2.8 2.8 0 00-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/>'),
@@ -3254,7 +3375,102 @@ async function viewTitle(ctx) {
   renderMine();
 }
 
-/* ---- Wall: every rated title as a poster, in the order they were rated ---- */
+/* ---- Wall: a graffiti-covered brick wall with every rated title pasted up ---- */
+
+/* Deterministic "randomness" per title, so each poster is pasted the same way every visit */
+function rnd(key, salt = 0) {
+  let h = 2166136261 ^ salt;
+  for (let i = 0; i < key.length; i++) { h ^= key.charCodeAt(i); h = Math.imul(h, 16777619); }
+  h ^= h >>> 13; h = Math.imul(h, 0x5bd1e995); h ^= h >>> 15;
+  return (h >>> 0) / 4294967296;
+}
+const PAINT = { pink: '#ff2e88', lime: '#b6ff3b', cyan: '#29d3ff', yellow: '#ffd21f', orange: '#ff7a1a', white: '#f7f3ea', black: '#111', purple: '#9b5cff' };
+const FONT_TAG = "'Sedgwick Ave Display', 'Bradley Hand', 'Segoe Script', cursive";
+const FONT_MARKER = "'Permanent Marker', 'Marker Felt', 'Arial Black', sans-serif";
+
+/** Graffiti fonts are only fetched when the Wall is opened. */
+function ensureWallFonts() {
+  if (document.getElementById('wall-fonts')) return;
+  const l = document.createElement('link');
+  l.id = 'wall-fonts'; l.rel = 'stylesheet';
+  l.href = 'https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Sedgwick+Ave+Display&family=Stardos+Stencil:wght@700&display=swap';
+  document.head.appendChild(l);
+}
+/** Shared spray-paint filters: roughened edges plus a soft overspray halo. */
+function sprayDefs() {
+  return `<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+    <filter id="g-spray" x="-15%" y="-25%" width="130%" height="150%">
+      <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="1" seed="4" result="grain"/>
+      <feDisplacementMap in="SourceGraphic" in2="grain" scale="2.6" xChannelSelector="R" yChannelSelector="G" result="rough"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2.4" result="halo"/>
+      <feColorMatrix in="halo" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 .5 0" result="overspray"/>
+      <feMerge><feMergeNode in="overspray"/><feMergeNode in="rough"/></feMerge>
+    </filter>
+    <linearGradient id="g-fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${PAINT.pink}"/><stop offset=".55" stop-color="${PAINT.orange}"/><stop offset="1" stop-color="${PAINT.yellow}"/>
+    </linearGradient>
+  </defs></svg>`;
+}
+/** The big piece: bubble outline, 3D block shadow, gradient fill, shine and drips. */
+function graffitiPiece(word) {
+  const w = esc(word);
+  const shadow = Array.from({ length: 9 }, (_, k) => `<text x="${320 + (k + 1) * 1.7}" y="${186 + (k + 1) * 1.7}" fill="#0b3140">${w}</text>`).join('');
+  const drips = [[118, 34], [196, 58], [262, 22], [351, 46], [437, 30], [498, 64]].map(([x, len]) =>
+    `<path d="M${x} 196 v${len}" stroke="${PAINT.yellow}" stroke-width="7" stroke-linecap="round"/><circle cx="${x}" cy="${196 + len + 3}" r="5.5" fill="${PAINT.yellow}"/>`).join('');
+  const shine = (x, y, r) => `<path d="M${x} ${y - r} Q${x} ${y} ${x + r} ${y} Q${x} ${y} ${x} ${y + r} Q${x} ${y} ${x - r} ${y} Q${x} ${y} ${x} ${y - r}Z" fill="#fff"/>`;
+  return `<svg class="g-piece" viewBox="0 0 640 270" aria-hidden="true" focusable="false">
+    <g filter="url(#g-spray)" transform="rotate(-4 320 150)">
+      <g font-family="${FONT_MARKER}" font-size="188" text-anchor="middle">
+        <text x="320" y="186" fill="none" stroke="rgba(255,255,255,.92)" stroke-width="46" stroke-linejoin="round">${w}</text>
+        ${shadow}
+        <text x="320" y="186" fill="none" stroke="#0a0a0a" stroke-width="20" stroke-linejoin="round">${w}</text>
+        <text x="320" y="186" fill="url(#g-fill)">${w}</text>
+        <text x="320" y="186" fill="none" stroke="#fff" stroke-width="3.5" stroke-dasharray="10 70" stroke-linecap="round" opacity=".9">${w}</text>
+      </g>
+      ${drips}
+      <path d="M92 40 l14 -26 l12 22 l14 -28 l12 26 l14 -22 l8 30 z" fill="none" stroke="${PAINT.yellow}" stroke-width="6" stroke-linejoin="round"/>
+      ${shine(560, 60, 20)}${shine(590, 98, 10)}${shine(84, 176, 12)}
+    </g>
+  </svg>`;
+}
+/** A handstyle tag with an underline swoosh and a few drips. */
+function graffitiTag(word, color, { size = 64, drip = true, swoosh = true } = {}) {
+  const w = esc(word);
+  const width = Math.max(120, word.length * size * 0.55 + 40);
+  return `<svg viewBox="0 0 ${width} ${size * 1.9}" aria-hidden="true" focusable="false">
+    <g filter="url(#g-spray)" font-family="${FONT_TAG}" font-size="${size}">
+      <text x="14" y="${size * 1.05}" fill="${color}" stroke="rgba(0,0,0,.55)" stroke-width="2" paint-order="stroke">${w}</text>
+      ${swoosh ? `<path d="M12 ${size * 1.3} C ${width * 0.35} ${size * 1.55}, ${width * 0.7} ${size * 1.05}, ${width - 10} ${size * 1.25}" fill="none" stroke="${color}" stroke-width="${size / 11}" stroke-linecap="round"/>` : ''}
+      ${drip ? [0.22, 0.58].map((f, k) => `<path d="M${width * f} ${size * 1.12} v${size * (0.28 + k * 0.2)}" stroke="${color}" stroke-width="${size / 16}" stroke-linecap="round"/>`).join('') : ''}
+    </g>
+  </svg>`;
+}
+function graffitiSplatter(color, seed) {
+  const dots = Array.from({ length: 16 }, (_, k) => {
+    const a = rnd(seed, k) * Math.PI * 2, d = 8 + rnd(seed, k + 50) * 46, r = 1.2 + rnd(seed, k + 99) * (d < 20 ? 9 : 4);
+    return `<circle cx="${60 + Math.cos(a) * d}" cy="${60 + Math.sin(a) * d}" r="${r.toFixed(1)}" fill="${color}"/>`;
+  }).join('');
+  return `<svg viewBox="0 0 120 120" aria-hidden="true" focusable="false"><g filter="url(#g-spray)"><circle cx="60" cy="60" r="16" fill="${color}"/>${dots}</g></svg>`;
+}
+function graffitiArrow(color) {
+  return `<svg viewBox="0 0 120 150" aria-hidden="true" focusable="false"><g filter="url(#g-spray)" fill="none" stroke="${color}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M30 12 C 90 30, 20 70, 64 128"/><path d="M40 104 L64 130 L82 100"/></g></svg>`;
+}
+function graffitiX(color) {
+  return `<svg viewBox="0 0 80 80" aria-hidden="true" focusable="false"><g filter="url(#g-spray)" stroke="${color}" stroke-width="9" stroke-linecap="round"><path d="M14 14 L66 66 M66 12 L16 68"/></g></svg>`;
+}
+/** A patch of grey "buff" paint rolled over an older tag. */
+function graffitiBuff() {
+  return `<svg viewBox="0 0 200 90" aria-hidden="true" focusable="false"><g filter="url(#g-spray)">
+    <path d="M6 12 L190 4 L196 80 L10 88 Z" fill="rgba(128,122,116,.72)"/>
+    <text x="30" y="60" font-family="${FONT_TAG}" font-size="40" fill="rgba(255,255,255,.18)">old tag</text></g></svg>`;
+}
+/** Place an element on a layer by percentages, with a tilt. */
+function gEl(html, { left, top, right, bottom, width, rot = 0, z = 1, opacity = 1, cls = '' }) {
+  const pos = [left != null ? `left:${left}%` : '', top != null ? `top:${top}%` : '', right != null ? `right:${right}%` : '', bottom != null ? `bottom:${bottom}%` : ''].filter(Boolean).join(';');
+  return `<div class="g-el ${cls}" style="${pos};width:${width};transform:rotate(${rot}deg);z-index:${z};opacity:${opacity}">${html}</div>`;
+}
+
 function wallPrefs() {
   let p = {};
   try { p = JSON.parse(Store.get(CONFIG.KEYS.wallPrefs, '{}')) || {}; } catch (e) { p = {}; }
@@ -3264,44 +3480,106 @@ function wallPrefs() {
   };
 }
 function wallEntries() { return DB.entries(DB.data.logs).filter((e) => e.log && e.log.rating != null); }
-/** A small, stable tilt per title, so a poster pins up the same way each time. */
-function tiltFor(key) {
-  let n = 0;
-  for (let i = 0; i < key.length; i++) n = (n * 31 + key.charCodeAt(i)) % 997;
-  return ((n % 7) - 3) * 0.8;
-}
 /** Wall posters are large, so they get their own higher-resolution sources. */
 function wallPosterHTML(t) {
   const srcs = [['w185', 185], ['w342', 342], ['w500', 500], ['w780', 780]]
     .map(([size, w]) => [imgUrl(t.poster_path, size), w]).filter(([u]) => u);
-  if (!srcs.length) return `<div class="poster" data-type="${t.media_type === 'tv' ? 'tv' : 'movie'}" data-title="${esc(t.title)}">${noImgHTML(t.media_type, t.title)}</div>`;
-  return `<div class="poster" data-type="${t.media_type === 'tv' ? 'tv' : 'movie'}" data-title="${esc(t.title)}"><img src="${esc(srcs[1] ? srcs[1][0] : srcs[0][0])}"
+  const attrs = `data-type="${t.media_type === 'tv' ? 'tv' : 'movie'}" data-title="${esc(t.title)}"`;
+  if (!srcs.length) return `<div class="poster" ${attrs}>${noImgHTML(t.media_type, t.title)}</div>`;
+  return `<div class="poster" ${attrs}><img src="${esc(srcs[1] ? srcs[1][0] : srcs[0][0])}"
     srcset="${srcs.map(([u, w]) => `${esc(u)} ${w}w`).join(', ')}"
     sizes="(min-width: 100rem) 20vw, (min-width: 60rem) 25vw, (min-width: 40rem) 33vw, 50vw"
     alt="" loading="lazy" decoding="async"></div>`;
 }
+/** One pasted-up poster: askew, sometimes taped, sometimes peeling. */
+function wallTileHTML(e, isNew) {
+  const k = e.key;
+  const tilt = ((rnd(k, 1) - 0.5) * 1.8).toFixed(2);
+  const rot = ((rnd(k, 2) - 0.5) * 7).toFixed(2);
+  const peel = rnd(k, 3) < 0.16;
+  const tapes = ['tl', 'tr', 'bl'].filter((c, n) => rnd(k, 10 + n) < 0.22).map((c) => `<span class="tape ${c}" aria-hidden="true"></span>`).join('');
+  const label = `${e.t.title}${e.t.year ? ` (${e.t.year})` : ''}, ${e.t.media_type === 'tv' ? 'TV show' : 'film'}${isNew ? ', new on your wall' : ''}`;
+  return `<a class="wall-tile ${peel ? 'peel' : ''} ${isNew ? 'await-pin' : ''}" href="${titleHref(e.t.media_type, e.t.tmdb_id)}" aria-label="${esc(label)}" style="--tilt:${tilt}deg;--rot:${rot}deg">
+    <div class="paste">${wallPosterHTML(e.t)}</div>${peel ? '<span class="flap" aria-hidden="true"></span>' : ''}${tapes}
+  </a>`;
+}
+const OVER_TAGS = [['cut!', PAINT.white], ['roll', PAINT.lime], ['2am', PAINT.cyan], ['act III', PAINT.pink], ['encore', PAINT.yellow], ['matinee', PAINT.orange], ['reel', PAINT.purple], ['fin', PAINT.white]];
+
 function viewWall(ctx) {
+  ensureWallFonts();
   const prefs = wallPrefs();
   const all = wallEntries();
   const seenAt = DB.data.meta.wallSeenAt || 0;
-  if (!all.length) {
-    ctx.root.innerHTML = `<div class="page">${pageHead('Wall')}
-      ${stateHTML({ icon: 'wall', title: 'Your wall is empty', body: 'Every time you rate a film or show, its poster goes up here. Rate something to pin your first poster.', actions: '<a class="btn btn-primary" href="#/search">Find something to rate</a><a class="btn" href="#/home">See what\u2019s trending</a>' })}</div>`;
-    return;
-  }
   const newCount = all.filter((e) => e.log.rated_at > seenAt).length;
-  ctx.root.innerHTML = `<div class="page wall-page">
-    ${pageHead('Wall', { lede: `${esc(plural(all.length, 'poster'))}${newCount ? `, ${esc(plural(newCount, 'new one', 'new ones'))} since your last visit` : ''}` })}
-    <div class="wall-toolbar glass" role="toolbar" aria-label="Wall options">
+  const who = (DB.data.profile.name || '').trim() || 'Wall';
+
+  const heroLayer = [
+    gEl(graffitiBuff(), { left: 30, top: 5, width: 'clamp(7rem, 30%, 13rem)', rot: -2, opacity: .9 }),
+    gEl(graffitiTag('reel', PAINT.cyan, { size: 58 }), { left: 3, top: 6, width: 'clamp(6rem, 24%, 11rem)', rot: -10 }),
+    gEl(graffitiSplatter(PAINT.pink, 'hero-a'), { left: 2, top: 46, width: 'clamp(3.5rem, 12%, 6rem)', rot: 0, opacity: .95 }),
+    gEl(graffitiX(PAINT.white), { left: 26, top: 4, width: 'clamp(2rem, 6%, 3rem)', rot: 8, z: 2 }),
+    gEl(graffitiTag('encore', PAINT.lime, { size: 52 }), { right: 3, top: 36, width: 'clamp(6.5rem, 16%, 12rem)', rot: 7, cls: 'g-wide' }),
+    gEl(graffitiArrow(PAINT.white), { left: 8, bottom: 4, width: 'clamp(2.5rem, 8%, 4rem)', rot: -6 }),
+    gEl(graffitiSplatter(PAINT.cyan, 'hero-b'), { right: 12, bottom: 10, width: 'clamp(3rem, 9%, 5rem)', opacity: .9 }),
+    `<div class="sticker sticker-hello" style="right:5%;top:9%;transform:rotate(6deg)" aria-hidden="true"><b>HELLO</b><small>my name is</small><span>${esc(who.slice(0, 14))}</span></div>`,
+    `<div class="sticker sticker-round seen-pos" aria-hidden="true"><div>${ICONS.eye}SEEN IT</div></div>`
+  ].join('');
+
+  const controls = all.length ? `<div class="wall-controls glass" role="toolbar" aria-label="Wall options">
       ${segHTML('wtype', [['all', 'All'], ['movie', 'Films'], ['tv', 'TV']], prefs.type, 'Show')}
       <button class="icon-btn glass-press" type="button" data-order></button>
-    </div>
-    <div class="wall" data-wall></div>
+    </div>` : '';
+  ctx.root.innerHTML = `<div class="page wall-page">
+    ${sprayDefs()}
+    <section class="wall-hero" aria-labelledby="wall-h">
+      <div class="g-layer" aria-hidden="true">${heroLayer}</div>
+      <h1 class="sr-only" id="wall-h" data-page-title tabindex="-1">Wall</h1>
+      ${graffitiPiece('WALL')}
+      <p class="wall-count">${all.length ? `${esc(plural(all.length, 'poster'))}${newCount ? ` \u00b7 ${esc(newCount)} new` : ''}` : 'Nothing pasted up yet'}</p>
+      ${controls}
+      ${all.length ? '<p class="wall-hint">Scroll up any time to bring back the menu.</p>' : ''}
+    </section>
+    <div class="wall" data-wall aria-label="Your posters"></div>
+    <div class="wall-end" aria-hidden="true"><div class="g-layer">
+      ${gEl(graffitiTag('fin.', PAINT.white, { size: 72 }), { left: 36, top: 14, width: 'clamp(7rem, 26%, 12rem)', rot: -5 })}
+      ${gEl(graffitiSplatter(PAINT.lime, 'end-a'), { left: 6, top: 20, width: 'clamp(3rem, 9%, 5rem)' })}
+      ${gEl(graffitiTag('keep watching', PAINT.pink, { size: 40, drip: false }), { right: 4, top: 52, width: 'clamp(8rem, 30%, 15rem)', rot: 4 })}
+      <div class="sticker sticker-bar" style="left:8%;bottom:18%;transform:rotate(-4deg)">NO SPOILERS</div>
+    </div></div>
   </div>`;
-  const wallEl = $('[data-wall]', ctx.root), orderBtn = $('[data-order]', ctx.root);
-  const savePrefs = () => Store.set(CONFIG.KEYS.wallPrefs, JSON.stringify(prefs));
+  const wallEl = $('[data-wall]', ctx.root);
 
-  /* New posters pin up when they first come into view, not off-screen. */
+  if (!all.length) {
+    wallEl.innerHTML = `<div style="grid-column:1/-1;padding:3rem 1rem;color:#fff">${stateHTML({ icon: 'wall', title: 'Your wall is empty', body: 'Every time you rate a film or show, its poster gets pasted up here.', actions: '<a class="btn btn-primary" href="#/search">Find something to rate</a>' })}</div>`;
+    return;
+  }
+
+  /* Phone tab bar: out of the way over posters, back on any upward scroll */
+  const tabbar = $('.tabbar');
+  let lastY = window.scrollY;
+  const showBar = () => tabbar.classList.remove('tab-hidden');
+  const hideBar = () => { if (!tabbar.contains(document.activeElement)) tabbar.classList.add('tab-hidden'); };
+  const barCoversPosters = () => {
+    const r = wallEl.getBoundingClientRect();
+    const barTop = window.innerHeight - 110;
+    return r.top < window.innerHeight && r.bottom > barTop;
+  };
+  const onWallScroll = () => {
+    const y = window.scrollY, dy = y - lastY;
+    lastY = y;
+    if (!barCoversPosters()) showBar();
+    else if (dy > 3) hideBar();
+    else if (dy < -10) showBar();
+  };
+  window.addEventListener('scroll', onWallScroll, { passive: true });
+  tabbar.addEventListener('focusin', showBar);
+  ctx.onLeave(() => {
+    window.removeEventListener('scroll', onWallScroll);
+    tabbar.removeEventListener('focusin', showBar);
+    showBar();
+  });
+
+  /* New posters get pasted up when they first come into view, not off-screen */
   let pinIO = null;
   if ('IntersectionObserver' in window) {
     pinIO = new IntersectionObserver((entries) => {
@@ -3318,6 +3596,40 @@ function viewWall(ctx) {
     ctx.onLeave(() => pinIO.disconnect());
   }
 
+  /* Tags sprayed across poster seams, positioned against real tile geometry */
+  const placeOverTags = () => {
+    $$('.g-over', wallEl).forEach((n) => n.remove());
+    const tiles = $$('.wall-tile', wallEl);
+    const cols = Math.max(1, Math.round(wallEl.clientWidth / (tiles[0] ? tiles[0].offsetWidth : 1)));
+    let n = 0;
+    for (let i = 2; i < tiles.length && n < 7; i += 7) {
+      const t = tiles[i];
+      const col = i % cols;
+      const spanSeam = col < cols - 1;
+      const [word, color] = OVER_TAGS[n % OVER_TAGS.length];
+      const el = document.createElement('div');
+      el.className = 'g-over';
+      el.setAttribute('aria-hidden', 'true');
+      const w = t.offsetWidth * (spanSeam ? 0.9 : 0.7);
+      el.style.width = `${w}px`;
+      el.style.left = `${t.offsetLeft + (spanSeam ? t.offsetWidth * 0.55 : t.offsetWidth * 0.15)}px`;
+      el.style.top = `${t.offsetTop + t.offsetHeight * (0.62 + rnd(word, n) * 0.18)}px`;
+      el.style.transform = `rotate(${((rnd(word, n + 7) - 0.5) * 16).toFixed(1)}deg)`;
+      el.innerHTML = graffitiTag(word, color, { size: 56 });
+      wallEl.appendChild(el);
+      n++;
+    }
+  };
+  let ro = null;
+  if ('ResizeObserver' in window) {
+    let lastW = 0;
+    ro = new ResizeObserver(() => { if (wallEl.clientWidth !== lastW) { lastW = wallEl.clientWidth; placeOverTags(); } });
+    ro.observe(wallEl);
+    ctx.onLeave(() => ro.disconnect());
+  }
+
+  const orderBtn = $('[data-order]', ctx.root);
+  const savePrefs = () => Store.set(CONFIG.KEYS.wallPrefs, JSON.stringify(prefs));
   const drawControls = () => {
     const newest = prefs.order === 'newest';
     orderBtn.innerHTML = newest ? ICONS.arrowDown : ICONS.arrowUp;
@@ -3329,17 +3641,11 @@ function viewWall(ctx) {
       .filter((e) => prefs.type === 'all' || e.t.media_type === prefs.type)
       .sort((a, b) => prefs.order === 'newest' ? b.log.rated_at - a.log.rated_at : a.log.rated_at - b.log.rated_at);
     if (!list.length) {
-      wallEl.innerHTML = `<div style="grid-column:1/-1;padding-top:4rem">${stateHTML({ icon: prefs.type === 'tv' ? 'tv' : 'film', title: `No ${prefs.type === 'tv' ? 'TV shows' : 'films'} on your wall yet`, body: 'Switch to All to see your whole wall.', compact: true })}</div>`;
+      wallEl.innerHTML = `<div style="grid-column:1/-1;padding:3rem 1rem">${stateHTML({ icon: prefs.type === 'tv' ? 'tv' : 'film', title: `No ${prefs.type === 'tv' ? 'TV shows' : 'films'} on your wall yet`, body: 'Switch to All to see your whole wall.', compact: true })}</div>`;
       return;
     }
-    wallEl.innerHTML = list.map((e) => {
-      const isNew = e.log.rated_at > seenAt;
-      const label = `${e.t.title}${e.t.year ? ` (${e.t.year})` : ''}, ${e.t.media_type === 'tv' ? 'TV show' : 'film'}${isNew ? ', new on your wall' : ''}`;
-      return `<a class="wall-tile ${isNew && firstPaint ? 'await-pin' : ''}" href="${titleHref(e.t.media_type, e.t.tmdb_id)}" aria-label="${esc(label)}" style="--rot:${tiltFor(e.key)}deg">
-        ${wallPosterHTML(e.t)}
-        ${isNew ? '<span class="badge new-chip" aria-hidden="true">New</span>' : ''}
-      </a>`;
-    }).join('');
+    wallEl.innerHTML = list.map((e) => wallTileHTML(e, firstPaint && e.log.rated_at > seenAt)).join('');
+    placeOverTags();
     if (firstPaint) {
       const waiting = $$('.await-pin', wallEl);
       if (pinIO) waiting.forEach((el) => pinIO.observe(el));
@@ -3348,6 +3654,8 @@ function viewWall(ctx) {
   };
   drawControls();
   draw(true);
+  /* Now that posters are laid out: tuck the tab bar if it would sit over them */
+  if (barCoversPosters()) hideBar();
   /* Everything currently on the wall has now been seen */
   if (newCount) { DB.data.meta.wallSeenAt = Date.now(); DB.save(); }
 
@@ -3772,6 +4080,40 @@ const ROUTES = [
 /* On phones, sections without their own tab highlight the closest tab. */
 const TAB_FOR = { browse: 'home', lists: 'home', reviews: 'profile', settings: 'profile' };
 
+/* Desktop sidebar: mounted to the left edge, collapsible to an icon rail */
+const Sidebar = {
+  timer: 0,
+  collapsed() { return document.documentElement.classList.contains('side-collapsed'); },
+  set(collapsed, animate) {
+    const root = document.documentElement;
+    if (animate && !reduceMotion()) {
+      root.classList.add('side-anim');
+      clearTimeout(this.timer);
+      this.timer = setTimeout(() => root.classList.remove('side-anim'), 500);
+    }
+    root.classList.toggle('side-collapsed', collapsed);
+    Store.set(CONFIG.KEYS.sidebar, collapsed ? 'collapsed' : 'expanded');
+    const btn = $('.side-toggle');
+    if (btn) {
+      const label = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+      btn.setAttribute('aria-expanded', String(!collapsed));
+      btn.setAttribute('aria-label', label);
+      btn.title = label;
+    }
+    /* In the icon rail, hovering an icon names it */
+    $$('.sidebar .side-link, .sidebar .brand').forEach((a) => {
+      const text = ($('.label', a) || a).textContent.trim();
+      if (collapsed) a.title = text; else a.removeAttribute('title');
+    });
+  },
+  init() {
+    const btn = $('.side-toggle');
+    if (!btn) return;
+    this.set(Store.get(CONFIG.KEYS.sidebar, '') === 'collapsed' || this.collapsed(), false);
+    btn.addEventListener('click', () => this.set(!this.collapsed(), true));
+  }
+};
+
 /* Persistent chrome lenses (tab bar, sidebar), created at boot */
 const Chrome = { tabLens: null, sideLens: null };
 
@@ -3826,6 +4168,8 @@ const Router = {
       setTitle(t) { $('#topbar-title').textContent = t || ''; document.title = t ? `${t} \u00b7 Wall` : 'Wall'; }
     };
     this.ctx = ctx;
+    /* The Wall tab turns the whole page into the wall and hides chrome over the posters */
+    document.documentElement.classList.toggle('wall-mode', !!route && route.nav === 'wall');
     this.updateChrome(route);
     ctx.setTitle(route ? route.title : 'Not found');
     const restoreY = isBack || isRefresh ? (isRefresh ? window.scrollY : this.scroll.get(hash) || 0) : 0;
@@ -3906,6 +4250,7 @@ function boot() {
   /* Older Safari only has addListener */
   if (darkQuery.addEventListener) darkQuery.addEventListener('change', onSystemTheme); else if (darkQuery.addListener) darkQuery.addListener(onSystemTheme);
   $$('.theme-toggle').forEach((b) => b.addEventListener('click', () => Theme.toggle()));
+  Sidebar.init();
 
   /* iOS Safari only applies :active on touch if a touch listener exists */
   document.addEventListener('touchstart', () => {}, { passive: true });
